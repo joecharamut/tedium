@@ -1,0 +1,3 @@
+accessWidener v1 named
+# FakePlayer
+extendable method net/minecraft/entity/mob/MobEntity tickNewAi ()V

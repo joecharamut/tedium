@@ -1,0 +1,7 @@
+{
+  "key.tedium.openMenu": "Open Menu",
+  "category.tedium.keys": "Tedium Controls",
+  "text.autoconfig.tedium.title": "Tedium Config",
+  "text.autoconfig.tedium.option.webServerEnabled": "Enable Local Web Server",
+  "text.autoconfig.tedium.option.webServerPort": "Local Web Server Port"
+}

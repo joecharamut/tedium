@@ -1,0 +1,10 @@
+{
+  "key.tedium.openMenu": "Open Menu",
+  "category.tedium.keys": "Tedium Controls",
+  "text.autoconfig.tedium.title": "Tedium Config",
+  "text.autoconfig.tedium.option.webServerEnabled": "Enable Local Web Server",
+  "text.autoconfig.tedium.option.webServerPort": "Local Web Server Port",
+  "text.autoconfig.tedium.option.enableFullbright": "Enable Fullbright Option",
+  "text.tedium.webServerStarted": "Local Web Server Started at ",
+  "text.tedium.webErrorStarting": "Error starting Local Web Server "
+}

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "rocks.spaghetti.tedium.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [ ],
+  "client": [
+    "MinecraftClientMixin",
+    "PlayerEntityMixin",
+    "KeyboardInputMixin",
+    "MouseMixin",
+    "ActivityInvoker",
+    "BrainMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
