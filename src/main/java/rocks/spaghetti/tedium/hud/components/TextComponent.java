@@ -45,6 +45,11 @@ public class TextComponent implements HudComponent {
         return textRenderer.fontHeight;
     }
 
+    public static int getStringWidth(String str) {
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        return textRenderer.getWidth(str);
+    }
+
     @Override
     public void render(MatrixStack matrixStack, float tickDelta) {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;

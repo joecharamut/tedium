@@ -17,9 +17,11 @@ import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.core.ai.EatFoodGoal;
 import rocks.spaghetti.tedium.core.ai.Task;
 import rocks.spaghetti.tedium.core.ai.TaskRunner;
 import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
@@ -52,10 +54,6 @@ public class FakePlayer extends PathAwareEntity {
     }
 
     public static FakePlayer create(ClientPlayerEntity realPlayer) {
-        if (imposter != null) {
-            throw new IllegalStateException("Instance already created");
-        }
-
         attributes = new AttributeContainer(LivingEntity.createLivingAttributes()
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 1.0D)
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.10000000149011612D)
@@ -123,6 +121,7 @@ public class FakePlayer extends PathAwareEntity {
     protected void initGoals() {
         Log.info("initGoals()");
         this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(0, new EatFoodGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
         this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
         this.goalSelector.add(99, taskRunner);
@@ -150,6 +149,18 @@ public class FakePlayer extends PathAwareEntity {
     public List<Task> getTasks() {
         throw new AssertionError();
 //        return this.taskRunner.getTasks();
+    }
+
+    public int getHungerLevel() {
+        return realPlayer.getHungerManager().getFoodLevel();
+    }
+
+    public PlayerInventory getInventory() {
+        return realPlayer.inventory;
+    }
+
+    public ClientPlayerEntity getRealPlayer() {
+        return realPlayer;
     }
 
     @Override

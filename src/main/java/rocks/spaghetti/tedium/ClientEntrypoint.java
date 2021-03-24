@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
@@ -25,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.FakePlayer;
+import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.core.PlayerCore;
 import rocks.spaghetti.tedium.hud.DebugHud;
-import rocks.spaghetti.tedium.mixin.KeyBindingMixin;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.web.WebServer;
 
@@ -36,18 +35,19 @@ import java.net.BindException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 public class ClientEntrypoint implements ClientModInitializer {
+    private static final ExecutorQueue runInClientThread = new ExecutorQueue();
     private static boolean fakePlayerState = false;
     private static boolean disableInput = false;
 
     private PlayerCore playerCore = null;
     private final WebServer webServer = new WebServer();
     private final DebugHud debugHud = new DebugHud();
-    private final ExecutorQueue runInClientThread = new ExecutorQueue();
     private boolean connected = false;
 
-    private static final KeyBinding aiToggle = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+    public static final KeyBinding aiToggle = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.tedium.toggleAi",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_J,
@@ -90,12 +90,6 @@ public class ClientEntrypoint implements ClientModInitializer {
 
     public static boolean isInputDisabled() {
         return disableInput;
-//        if (!disableInput) return false;
-//        MinecraftClient client = MinecraftClient.getInstance();
-//        if (client.isInSingleplayer() && client.isPaused()) return false;
-//        // todo mp check
-//        Screen current = client.currentScreen;
-//        return true;
     }
 
     public static void onGameMenuOpened() {
@@ -124,20 +118,37 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
     }
 
+    public static void takeScreenshot(Consumer<NativeImage> callback) {
+        runInClientThread.execute(() -> {
+            Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
+            callback.accept(ScreenshotUtils.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer));
+        });
+    }
+
+    public static NativeImage takeScreenshotBlocking() {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final NativeImage[] imageHolder = { null };
+
+        takeScreenshot(image -> {
+            imageHolder[0] = image;
+            latch.countDown();
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Log.catching(e);
+            Thread.currentThread().interrupt();
+        }
+
+        return imageHolder[0];
+    }
+
     @Override
     public void onInitializeClient() {
         Log.info("Hello from {}!", Constants.MOD_ID);
         ModConfig.register(null, this::onSaveConfig);
 
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (isInputDisabled()) {
-                KeyBindingMixin.getKeysById().forEach((translationKey, bind) -> {
-                    if (!translationKey.equals(aiToggle.getTranslationKey())) {
-                        ((KeyBindingMixin) bind).invokeReset();
-                    }
-                });
-            }
-        });
         ClientTickEvents.END_CLIENT_TICK.register(this::endClientTick);
 
         HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> {
@@ -175,6 +186,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         playerCore.tick(client);
+        InteractionManager.tick();
 
         while (aiToggle.wasPressed()) {
             toggleFakePlayerState();
@@ -231,22 +243,9 @@ public class ClientEntrypoint implements ClientModInitializer {
         assert client.world != null;
 
         webServer.registerPath("/screenshot", session -> {
-            final CountDownLatch latch = new CountDownLatch(1);
-            final NativeImage[] image = { null };
-
-            runInClientThread.execute(() -> {
-                Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
-                image[0] = ScreenshotUtils.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer);
-                latch.countDown();
-            });
-
-            try {
-                latch.await();
-            } catch (InterruptedException e) { Log.catching(e); }
-
             byte[] imageBytes = { };
             try {
-                imageBytes = image[0].getBytes();
+                imageBytes = takeScreenshotBlocking().getBytes();
             } catch (IOException e) { Log.catching(e); }
 
             return WebServer.bytesResponse(imageBytes, "image/png");
