@@ -11,21 +11,21 @@ import rocks.spaghetti.tedium.ClientEntrypoint;
 public abstract class MouseMixin {
     @Inject(method = "lockCursor", at = @At("HEAD"), cancellable = true)
     private void lockCursor(CallbackInfo info) {
-        if (ClientEntrypoint.disableMouseInput) {
+        if (ClientEntrypoint.isInputDisabled()) {
             info.cancel();
         }
     }
 
     @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, int button, int action, int mods, CallbackInfo info) {
-        if (ClientEntrypoint.disableMouseInput) {
+        if (ClientEntrypoint.isInputDisabled()) {
             info.cancel();
         }
     }
 
     @Inject(method = "onMouseScroll", at = @At("HEAD"), cancellable = true)
     private void onMouseScroll(long window, double horizontal, double vertical, CallbackInfo info) {
-        if (ClientEntrypoint.disableMouseInput) {
+        if (ClientEntrypoint.isInputDisabled()) {
             info.cancel();
         }
     }

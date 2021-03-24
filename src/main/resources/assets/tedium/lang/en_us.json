@@ -1,5 +1,5 @@
 {
-  "key.tedium.openMenu": "Open Menu",
+  "key.tedium.toggleAi": "Toggle Mode",
   "category.tedium.keys": "Tedium Controls",
   "text.autoconfig.tedium.title": "Tedium Config",
   "text.autoconfig.tedium.option.webServerEnabled": "Enable Local Web Server",

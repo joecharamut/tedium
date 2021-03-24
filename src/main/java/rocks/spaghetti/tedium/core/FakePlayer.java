@@ -1,7 +1,5 @@
 package rocks.spaghetti.tedium.core;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import net.minecraft.client.MinecraftClient;
@@ -10,26 +8,22 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.brain.Activity;
-import net.minecraft.entity.ai.brain.Brain;
-import net.minecraft.entity.ai.brain.MemoryModuleType;
-import net.minecraft.entity.ai.brain.sensor.Sensor;
-import net.minecraft.entity.ai.brain.sensor.SensorType;
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.control.JumpControl;
 import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.ai.goal.PrioritizedGoal;
+import net.minecraft.entity.ai.goal.SwimGoal;
 import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.MobVisibilityCache;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.util.dynamic.GlobalPos;
-import net.minecraft.util.math.*;
-import net.minecraft.world.World;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import rocks.spaghetti.tedium.Log;
-import rocks.spaghetti.tedium.core.compat.ClientBrain;
+import rocks.spaghetti.tedium.core.ai.Task;
+import rocks.spaghetti.tedium.core.ai.TaskRunner;
+import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -43,9 +37,7 @@ public class FakePlayer extends PathAwareEntity {
     private static FakePlayer imposter = null;
 
     private final ClientPlayerEntity realPlayer;
-    private final MobVisibilityCache visibilityCache;
-    private ClientBrain clientBrain;
-    private Brain<FakePlayer> myBrain;
+    private final TaskRunner taskRunner;
 
     public FakePlayer(ClientPlayerEntity realPlayer) {
         super(EntityType.ZOMBIE, realPlayer.world);
@@ -54,11 +46,17 @@ public class FakePlayer extends PathAwareEntity {
 
         this.lookControl = new FakeLookControl(this);
         this.jumpControl = new FakeJumpControl(this);
+        this.taskRunner = new TaskRunner(this);
 
-        this.visibilityCache = new MobVisibilityCache(this);
+        initGoals();
+        initTasks();
     }
 
     public static FakePlayer create(ClientPlayerEntity realPlayer) {
+        if (imposter != null) {
+            throw new IllegalStateException("Instance already created");
+        }
+
         attributes = new AttributeContainer(LivingEntity.createLivingAttributes()
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 1.0D)
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.10000000149011612D)
@@ -113,46 +111,46 @@ public class FakePlayer extends PathAwareEntity {
     }
 
     @Override
-    public void initGoals() {
+    protected void initGoals() {
         Log.info("initGoals()");
         this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(99, taskRunner);
         Log.info("end initGoals()");
     }
 
-    public List<PrioritizedGoal> getGoals() {
+    protected void initTasks() {
+        Log.info("initTasks()");
+        Log.info("end initTasks()");
+    }
+
+    public List<PrioritizedGoal> getRunningGoals() {
         return this.goalSelector.getRunningGoals().collect(Collectors.toList());
     }
 
-    @Override
-    public Brain<?> getBrain() {
-        return this.myBrain;
+    public List<PrioritizedGoal> getGoals() {
+        return new ArrayList<>(((GoalSelectorMixin) this.goalSelector).getGoals());
     }
 
-    public void initBrain() {
-        Log.info("initBrain()");
-        List<MemoryModuleType<?>> memories = Arrays.asList(
-                MemoryModuleType.HOME,
-                MemoryModuleType.WALK_TARGET,
-                MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE
-        );
-        List<SensorType<? extends Sensor<? super FakePlayer>>> sensors = Arrays.asList(
+    public List<Task> getRunningTasks() {
+        throw new AssertionError();
+//        return this.taskRunner.getRunningTasks();
+    }
 
-        );
+    public List<Task> getTasks() {
+        throw new AssertionError();
+//        return this.taskRunner.getTasks();
+    }
 
-        myBrain = new Brain<>(memories, sensors, ImmutableList.of(), () -> Brain.createBrainCodec(memories, sensors));
-        this.brain = myBrain;
+    @Override
+    public void tickNewAi() {
+        if (!this.isAiDisabled()) {
+            this.goalSelector.tick();
 
-        if (true) return;
-
-        myBrain.remember(MemoryModuleType.HOME, GlobalPos.create(World.OVERWORLD, new BlockPos(217, 66, -123)));
-
-        myBrain.setTaskList(Activities.CORE, Activities.createCoreTasks());
-        brain.setCoreActivities(ImmutableSet.of(Activities.CORE));
-        brain.setDefaultActivity(Activities.CORE);
-        brain.doExclusively(Activities.CORE);
-
-        this.clientBrain = new ClientBrain(myBrain);
-        Log.info("end initBrain()");
+            this.navigation.tick();
+            this.moveControl.tick();
+            this.lookControl.tick();
+            this.jumpControl.tick();
+        }
     }
 
     // ========================= \/ Compatibility Layers \/ =========================
@@ -262,21 +260,6 @@ public class FakePlayer extends PathAwareEntity {
     @Override
     public int getLookYawSpeed() {
         return 10;
-    }
-
-    @Override
-    public void tickNewAi() {
-        if (!this.isAiDisabled()) {
-//            this.clientBrain.tick(client.world, this);
-            this.visibilityCache.clear();
-            this.targetSelector.tick();
-            this.goalSelector.tick();
-            this.navigation.tick();
-            this.mobTick();
-            this.moveControl.tick();
-            this.lookControl.tick();
-            this.jumpControl.tick();
-        }
     }
 
     @Override

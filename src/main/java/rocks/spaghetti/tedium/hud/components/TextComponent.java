@@ -40,6 +40,11 @@ public class TextComponent implements HudComponent {
         return this;
     }
 
+    public static int getLineHeight() {
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        return textRenderer.fontHeight;
+    }
+
     @Override
     public void render(MatrixStack matrixStack, float tickDelta) {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;

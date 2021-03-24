@@ -9,7 +9,9 @@
     "KeyboardInputMixin",
     "MouseMixin",
     "ActivityInvoker",
-    "BrainMixin"
+    "GoalSelectorMixin",
+    "KeyBindingMixin",
+    "GameMenuScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

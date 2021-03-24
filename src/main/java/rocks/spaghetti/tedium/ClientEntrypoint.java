@@ -6,13 +6,13 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotUtils;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.*;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -27,6 +27,7 @@ import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.PlayerCore;
 import rocks.spaghetti.tedium.hud.DebugHud;
+import rocks.spaghetti.tedium.mixin.KeyBindingMixin;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.web.WebServer;
 
@@ -37,7 +38,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 public class ClientEntrypoint implements ClientModInitializer {
-    public static boolean disableMouseInput = false;
+    private static boolean fakePlayerState = false;
+    private static boolean disableInput = false;
 
     private PlayerCore playerCore = null;
     private final WebServer webServer = new WebServer();
@@ -45,8 +47,8 @@ public class ClientEntrypoint implements ClientModInitializer {
     private final ExecutorQueue runInClientThread = new ExecutorQueue();
     private boolean connected = false;
 
-    private static final KeyBinding openMenu = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.openMenu",
+    private static final KeyBinding aiToggle = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.tedium.toggleAi",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_J,
             "category.tedium.keys"
@@ -75,23 +77,50 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
     }
 
-    private void test() {
+    public static void sendClientMessage(Text message) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null) return;
+        MutableText text = new LiteralText("[Tedium] ").formatted(Formatting.YELLOW).append(message);
+        client.player.sendSystemMessage(text, Util.NIL_UUID);
+    }
+
+    public static void sendClientMessage(String message) {
+        sendClientMessage(new LiteralText(message).formatted(Formatting.WHITE));
+    }
+
+    public static boolean isInputDisabled() {
+        return disableInput;
+//        if (!disableInput) return false;
+//        MinecraftClient client = MinecraftClient.getInstance();
+//        if (client.isInSingleplayer() && client.isPaused()) return false;
+//        // todo mp check
+//        Screen current = client.currentScreen;
+//        return true;
+    }
+
+    public static void onGameMenuOpened() {
+        setFakePlayerState(false);
+    }
+
+    private static void toggleFakePlayerState() {
+        setFakePlayerState(!fakePlayerState);
+    }
+
+    private static void setFakePlayerState(boolean enabled) {
+        fakePlayerState = enabled;
+
         FakePlayer fake = FakePlayer.get();
         MinecraftClient client = MinecraftClient.getInstance();
-        PlayerEntity player = client.player;
 
-        if (fake.isAiDisabled()) {
-            disableMouseInput = true;
+        if (enabled && fake.isAiDisabled()) {
+            disableInput = true;
             client.mouse.unlockCursor();
-            player.sendMessage(new LiteralText("Beginning fake player test..."), false);
-
-            fake.initGoals();
-            fake.initBrain();
+            sendClientMessage("Controller handed to P2");
             fake.setAiDisabled(false);
-        } else {
-            disableMouseInput = false;
+        } else if (!enabled && !fake.isAiDisabled()) {
+            disableInput = false;
             fake.setAiDisabled(true);
-            player.sendMessage(new LiteralText("Stopped"), false);
+            sendClientMessage("And right back to you, P1");
         }
     }
 
@@ -100,6 +129,15 @@ public class ClientEntrypoint implements ClientModInitializer {
         Log.info("Hello from {}!", Constants.MOD_ID);
         ModConfig.register(null, this::onSaveConfig);
 
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            if (isInputDisabled()) {
+                KeyBindingMixin.getKeysById().forEach((translationKey, bind) -> {
+                    if (!translationKey.equals(aiToggle.getTranslationKey())) {
+                        ((KeyBindingMixin) bind).invokeReset();
+                    }
+                });
+            }
+        });
         ClientTickEvents.END_CLIENT_TICK.register(this::endClientTick);
 
         HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> {
@@ -115,7 +153,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
     private void onSaveConfig(ModConfig config) {
         if (ModConfig.isFullbrightEnabled()) {
-            Option.GAMMA.setMax(100);
+            Option.GAMMA.setMax(100.0f);
         }
     }
 
@@ -138,8 +176,8 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         playerCore.tick(client);
 
-        while (openMenu.wasPressed()) {
-            test();
+        while (aiToggle.wasPressed()) {
+            toggleFakePlayerState();
         }
 
         while (testKey.wasPressed()) {
@@ -167,16 +205,14 @@ public class ClientEntrypoint implements ClientModInitializer {
             try {
                 webServer.startServer();
                 registerWebContexts();
-                MutableText text = new LiteralText("[Tedium] ").formatted(Formatting.YELLOW)
-                        .append(new TranslatableText("text.tedium.webServerStarted").formatted(Formatting.WHITE))
+                sendClientMessage(new TranslatableText("text.tedium.webServerStarted")
+                        .formatted(Formatting.WHITE)
                         .append(new LiteralText("http://localhost:" + ModConfig.getWebServerPort())
                                 .formatted(Formatting.WHITE).formatted(Formatting.UNDERLINE)
-                                .styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "http://localhost:" + ModConfig.getWebServerPort()))));
-                client.player.sendSystemMessage(text, Util.NIL_UUID);
+                                .styled(style -> style.withClickEvent(
+                                        new ClickEvent(ClickEvent.Action.OPEN_URL, "http://localhost:" + ModConfig.getWebServerPort())))));
             } catch (BindException ex) {
-                MutableText text = new LiteralText("[Tedium] ").formatted(Formatting.YELLOW)
-                        .append(new TranslatableText("text.tedium.webErrorStarting").formatted(Formatting.RED));
-                client.player.sendSystemMessage(text, Util.NIL_UUID);
+                sendClientMessage(new TranslatableText("text.tedium.webErrorStarting").formatted(Formatting.RED));
             }
         }
     }
