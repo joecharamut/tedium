@@ -11,8 +11,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.control.JumpControl;
 import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.goal.PrioritizedGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
+import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -67,10 +66,20 @@ public class FakePlayer extends PathAwareEntity {
                 .add(EntityAttributes.GENERIC_ARMOR, 2.0D)
         .build());
 
+        List<Method> exclusions = Collections.emptyList();
+        try {
+             exclusions = Arrays.asList(
+                     Entity.class.getMethod("updatePosition", double.class, double.class, double.class),
+                     Entity.class.getMethod("setPos", double.class, double.class, double.class),
+                     Entity.class.getMethod("setBoundingBox", Box.class)
+             );
+        } catch (NoSuchMethodException e) { Log.catching(e); }
 
         Map<Method, Method> playerMethods = new HashMap<>();
         for (Method method : realPlayer.getClass().getMethods()) {
-            playerMethods.put(method, method);
+            if (!exclusions.contains(method)) {
+                playerMethods.put(method, method);
+            }
         }
 
         ProxyFactory factory = new ProxyFactory();
@@ -114,6 +123,8 @@ public class FakePlayer extends PathAwareEntity {
     protected void initGoals() {
         Log.info("initGoals()");
         this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
+        this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
         this.goalSelector.add(99, taskRunner);
         Log.info("end initGoals()");
     }
@@ -143,6 +154,10 @@ public class FakePlayer extends PathAwareEntity {
 
     @Override
     public void tickNewAi() {
+        if (realPlayer != null) {
+            super.updatePosition(realPlayer.getX(), realPlayer.getY(), realPlayer.getZ());
+        }
+
         if (!this.isAiDisabled()) {
             this.goalSelector.tick();
 
@@ -260,6 +275,13 @@ public class FakePlayer extends PathAwareEntity {
     @Override
     public int getLookYawSpeed() {
         return 10;
+    }
+
+
+
+    @Override
+    protected void refreshPosition() {
+
     }
 
     @Override
