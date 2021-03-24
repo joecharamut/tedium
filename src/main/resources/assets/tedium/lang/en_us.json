@@ -6,5 +6,7 @@
   "text.autoconfig.tedium.option.webServerPort": "Local Web Server Port",
   "text.autoconfig.tedium.option.enableFullbright": "Enable Fullbright Option",
   "text.tedium.webServerStarted": "Local Web Server Started at ",
-  "text.tedium.webErrorStarting": "Error starting Local Web Server "
+  "text.tedium.webErrorStarting": "Error starting Local Web Server",
+  "text.tedium.aiEnabled": "AI Control enabled",
+  "text.tedium.aiDisabled": "AI Control disabled"
 }

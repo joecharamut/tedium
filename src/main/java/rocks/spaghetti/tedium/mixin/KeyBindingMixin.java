@@ -13,7 +13,13 @@ import rocks.spaghetti.tedium.ClientEntrypoint;
 public abstract class KeyBindingMixin {
     @Inject(method = "onKeyPressed", at = @At("HEAD"), cancellable = true)
     private static void onKeyPressed(InputUtil.Key key, CallbackInfo info) {
-        if (ClientEntrypoint.isInputDisabled() && !key.getTranslationKey().equals(ClientEntrypoint.aiToggle.getBoundKeyTranslationKey())) {
+        if (ClientEntrypoint.isInputDisabled()) {
+            for (KeyBinding bind : ClientEntrypoint.modKeybindings) {
+                if (key.getTranslationKey().equals(bind.getBoundKeyTranslationKey())) {
+                    return;
+                }
+            }
+
             info.cancel();
         }
     }

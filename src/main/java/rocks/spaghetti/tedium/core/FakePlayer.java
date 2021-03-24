@@ -21,9 +21,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import rocks.spaghetti.tedium.Log;
-import rocks.spaghetti.tedium.core.ai.EatFoodGoal;
-import rocks.spaghetti.tedium.core.ai.Task;
-import rocks.spaghetti.tedium.core.ai.TaskRunner;
+import rocks.spaghetti.tedium.core.ai.*;
 import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
 
 import java.lang.reflect.InvocationTargetException;
@@ -38,7 +36,7 @@ public class FakePlayer extends PathAwareEntity {
     private static FakePlayer imposter = null;
 
     private final ClientPlayerEntity realPlayer;
-    private final TaskRunner taskRunner;
+    private final MutableGoalSelector mutableGoalSelector;
 
     public FakePlayer(ClientPlayerEntity realPlayer) {
         super(EntityType.ZOMBIE, realPlayer.world);
@@ -47,10 +45,9 @@ public class FakePlayer extends PathAwareEntity {
 
         this.lookControl = new FakeLookControl(this);
         this.jumpControl = new FakeJumpControl(this);
-        this.taskRunner = new TaskRunner(this);
+        this.mutableGoalSelector = new MutableGoalSelector(this);
 
         initGoals();
-        initTasks();
     }
 
     public static FakePlayer create(ClientPlayerEntity realPlayer) {
@@ -120,17 +117,15 @@ public class FakePlayer extends PathAwareEntity {
     @Override
     protected void initGoals() {
         Log.info("initGoals()");
+
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(0, new EatFoodGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
+        this.goalSelector.add(10, new CraftItemGoal(this));
         this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
-        this.goalSelector.add(99, taskRunner);
-        Log.info("end initGoals()");
-    }
+        this.goalSelector.add(255, mutableGoalSelector);
 
-    protected void initTasks() {
-        Log.info("initTasks()");
-        Log.info("end initTasks()");
+        Log.info("end initGoals()");
     }
 
     public List<PrioritizedGoal> getRunningGoals() {
@@ -139,16 +134,6 @@ public class FakePlayer extends PathAwareEntity {
 
     public List<PrioritizedGoal> getGoals() {
         return new ArrayList<>(((GoalSelectorMixin) this.goalSelector).getGoals());
-    }
-
-    public List<Task> getRunningTasks() {
-        throw new AssertionError();
-//        return this.taskRunner.getRunningTasks();
-    }
-
-    public List<Task> getTasks() {
-        throw new AssertionError();
-//        return this.taskRunner.getTasks();
     }
 
     public int getHungerLevel() {
@@ -165,13 +150,9 @@ public class FakePlayer extends PathAwareEntity {
 
     @Override
     public void tickNewAi() {
-        if (realPlayer != null) {
-            super.updatePosition(realPlayer.getX(), realPlayer.getY(), realPlayer.getZ());
-        }
-
         if (!this.isAiDisabled()) {
+            if (realPlayer != null) super.updatePosition(realPlayer.getX(), realPlayer.getY(), realPlayer.getZ());
             this.goalSelector.tick();
-
             this.navigation.tick();
             this.moveControl.tick();
             this.lookControl.tick();
@@ -286,13 +267,6 @@ public class FakePlayer extends PathAwareEntity {
     @Override
     public int getLookYawSpeed() {
         return 10;
-    }
-
-
-
-    @Override
-    protected void refreshPosition() {
-
     }
 
     @Override

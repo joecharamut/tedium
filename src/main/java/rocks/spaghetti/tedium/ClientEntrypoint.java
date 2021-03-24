@@ -42,24 +42,36 @@ public class ClientEntrypoint implements ClientModInitializer {
     private static boolean fakePlayerState = false;
     private static boolean disableInput = false;
 
-    private PlayerCore playerCore = null;
     private final WebServer webServer = new WebServer();
     private final DebugHud debugHud = new DebugHud();
+    private PlayerCore playerCore = null;
     private boolean connected = false;
+    private boolean debugEnabled = false;
 
-    public static final KeyBinding aiToggle = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+    private static final KeyBinding toggleAiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.tedium.toggleAi",
             InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_J,
-            "category.tedium.keys"
+            GLFW.GLFW_KEY_F9,
+            Constants.CATEGORY_KEYS
+    ));
+
+    private static final KeyBinding toggleDebugKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.tedium.toggleDebug",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_F10,
+            Constants.CATEGORY_KEYS
     ));
 
     private static final KeyBinding testKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.tedium.test",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_K,
-            "category.tedium.keys"
+            Constants.CATEGORY_KEYS
     ));
+
+    public static final KeyBinding[] modKeybindings = {
+            toggleAiKey, toggleDebugKey
+    };
 
     private static class ExecutorQueue implements Executor {
         final Queue<Runnable> tasks = new ArrayDeque<>();
@@ -77,9 +89,14 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
     }
 
-    public static void sendClientMessage(Text message) {
+    public static void sendClientMessage(MutableText message) {
         MinecraftClient client = MinecraftClient.getInstance();
+
         if (client.player == null) return;
+        if (message.getStyle().getColor() == null) {
+            message = message.formatted(Formatting.WHITE);
+        }
+
         MutableText text = new LiteralText("[Tedium] ").formatted(Formatting.YELLOW).append(message);
         client.player.sendSystemMessage(text, Util.NIL_UUID);
     }
@@ -109,12 +126,12 @@ public class ClientEntrypoint implements ClientModInitializer {
         if (enabled && fake.isAiDisabled()) {
             disableInput = true;
             client.mouse.unlockCursor();
-            sendClientMessage("Controller handed to P2");
+            sendClientMessage(new TranslatableText("text.tedium.aiEnabled"));
             fake.setAiDisabled(false);
         } else if (!enabled && !fake.isAiDisabled()) {
             disableInput = false;
             fake.setAiDisabled(true);
-            sendClientMessage("And right back to you, P1");
+            sendClientMessage(new TranslatableText("text.tedium.aiDisabled"));
         }
     }
 
@@ -158,7 +175,10 @@ public class ClientEntrypoint implements ClientModInitializer {
             // dont draw over/under debug menu or player list
             if (options.debugEnabled) return;
             if (!client.isInSingleplayer() && options.keyPlayerList.isPressed()) return;
-            debugHud.render(matrixStack, tickDelta);
+
+            if (debugEnabled) {
+                debugHud.render(matrixStack, tickDelta);
+            }
         });
     }
 
@@ -188,17 +208,21 @@ public class ClientEntrypoint implements ClientModInitializer {
         playerCore.tick(client);
         InteractionManager.tick();
 
-        while (aiToggle.wasPressed()) {
+        if (toggleAiKey.wasPressed()) {
             toggleFakePlayerState();
         }
 
-        while (testKey.wasPressed()) {
+        if (testKey.wasPressed()) {
             BlockPos pos = client.player.getBlockPos().add(0, 3, 0);
             client.interactionManager.interactBlock(
                     client.player,
                     client.world,
                     Hand.MAIN_HAND,
                     new BlockHitResult(Vec3d.ofBottomCenter(pos), Direction.NORTH, pos, false));
+        }
+
+        if (toggleDebugKey.wasPressed()) {
+            debugEnabled = !debugEnabled;
         }
 
         runInClientThread.runNext();
