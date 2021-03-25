@@ -1,17 +1,23 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.crafting;
 
-import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.item.Item;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeManager;
 import net.minecraft.recipe.RecipeType;
+import net.minecraft.tag.ServerTagManagerHolder;
+import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class Recipes {
     private Recipes() { throw new IllegalStateException("Utility Class"); }
+
+    private static final Map<Item, CraftingRecipe> recipesByOutput = new HashMap<>();
 
     public static CraftingRecipe CRAFTING_TABLE;
 
@@ -22,8 +28,16 @@ public class Recipes {
         temp = manager.get(new Identifier("minecraft", "crafting_table"));
         if (temp.isPresent() && temp.get() instanceof CraftingRecipe) CRAFTING_TABLE = (CraftingRecipe) temp.get();
 
-//        for (Recipe<CraftingInventory> recipe : world.getRecipeManager().listAllOfType(RecipeType.CRAFTING)) {
-//            Log.info("Recipe {}: {}", recipe.getId(), recipe.getOutput());
-//        }
+        for (CraftingRecipe recipe : world.getRecipeManager().listAllOfType(RecipeType.CRAFTING)) {
+            recipesByOutput.put(recipe.getOutput().getItem(), recipe);
+        }
+    }
+
+    public static CraftingRecipe getRecipeFor(Item item) {
+        return recipesByOutput.getOrDefault(item, null);
+    }
+
+    public static Identifier getTagFor(Tag<Item> tag) {
+        return ServerTagManagerHolder.getTagManager().getItems().getTagId(tag);
     }
 }

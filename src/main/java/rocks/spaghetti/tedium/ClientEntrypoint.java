@@ -26,6 +26,7 @@ import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.core.PlayerCore;
+import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.hud.DebugHud;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.web.WebServer;

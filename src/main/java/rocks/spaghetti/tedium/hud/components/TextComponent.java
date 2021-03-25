@@ -5,14 +5,14 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.BaseText;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 
-import java.awt.*;
 
 public class TextComponent implements HudComponent {
     private final BaseText text;
     private final int x;
     private final int y;
-    private int color = 0xffffff;
+    private Formatting formatting = Formatting.WHITE;
     private boolean shadow = true;
 
     public TextComponent(BaseText text, int x, int y) {
@@ -25,19 +25,19 @@ public class TextComponent implements HudComponent {
         this(new LiteralText(text), x, y);
     }
 
-    public TextComponent setColor(int color) {
-        this.color = color;
-        return this;
-    }
-
-    public TextComponent setColor(Color color) {
-        this.color = color.getRGB();
+    public TextComponent setFormatting(Formatting formatting) {
+        this.formatting = formatting;
         return this;
     }
 
     public TextComponent setShadow(boolean shadow) {
         this.shadow = shadow;
         return this;
+    }
+
+    public int width() {
+        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        return textRenderer.getWidth(text);
     }
 
     public static int getLineHeight() {
@@ -53,10 +53,11 @@ public class TextComponent implements HudComponent {
     @Override
     public void render(MatrixStack matrixStack, float tickDelta) {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+
         if (shadow) {
-            textRenderer.drawWithShadow(matrixStack, text, x, y, color);
+            textRenderer.drawWithShadow(matrixStack, text.formatted(formatting), x, y, formatting.getColorValue());
         } else {
-            textRenderer.draw(matrixStack, text, x, y, color);
+            textRenderer.draw(matrixStack, text.formatted(formatting), x, y, formatting.getColorValue());
         }
     }
 }

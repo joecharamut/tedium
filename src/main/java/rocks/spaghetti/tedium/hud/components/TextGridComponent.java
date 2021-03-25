@@ -1,49 +1,61 @@
 package rocks.spaghetti.tedium.hud.components;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Formatting;
 
-import java.awt.Color;
 import java.util.LinkedList;
 import java.util.List;
 
 public class TextGridComponent implements HudComponent {
     private final List<TextComponent> upperLeftTexts = new LinkedList<>();
-    private int upperLeftX = 4;
-    private int upperLeftY = 4;
+    private int upperLeftX = 2;
+    private int upperLeftY = 2;
 
     private final List<TextComponent> upperRightTexts = new LinkedList<>();
-    private int upperRightX = 4;
-    private int upperRightY = 4;
+    private int upperRightX = 2;
+    private int upperRightY = 2;
 
-    public void upperLeft(String message, Color color, boolean shadow) {
-        upperLeftTexts.add(new TextComponent(message, upperLeftX, upperLeftY).setColor(color).setShadow(shadow));
+    public void upperLeft(String message, Formatting formatting, boolean shadow) {
+        upperLeftTexts.add(new TextComponent(message, upperLeftX, upperLeftY).setFormatting(formatting).setShadow(shadow));
         upperLeftY += TextComponent.getLineHeight();
     }
 
-    public void upperLeft(String message, Color color) {
-        upperLeft(message, color, true);
+    public void upperLeft(String message, Formatting formatting) {
+        upperLeft(message, formatting, false);
     }
 
     public void upperLeft(String message) {
-        upperLeft(message, Color.WHITE);
-    }
-
-    public void upperRight(String message, Color color, boolean shadow) {
-        upperRightTexts.add(new TextComponent(message, upperRightX, upperRightY).setColor(color).setShadow(shadow));
-        upperRightY += TextComponent.getLineHeight();
-    }
-
-    public void upperRight(String message, Color color) {
-        upperRight(message, color, true);
-    }
-
-    public void upperRight(String message) {
-        upperRight(message, Color.WHITE);
+        upperLeft(message, Formatting.WHITE);
     }
 
     @Override
     public void render(MatrixStack matrixStack, float tickDelta) {
-        upperLeftTexts.forEach(text -> text.render(matrixStack, tickDelta));
-        upperRightTexts.forEach(text -> text.render(matrixStack, tickDelta));
+        for (int i = 0; i < upperLeftTexts.size(); i++) {
+            TextComponent text = upperLeftTexts.get(i);
+            if (text.width() == 0) continue;
+
+            int height = TextComponent.getLineHeight();
+            int width = text.width();
+            int boxX = 2;
+            int boxY = 2 + height * i;
+
+            DrawableHelper.fill(matrixStack, boxX - 1, boxY - 1, boxX + width + 1, boxY + height - 1, 0x90505050);
+            text.render(matrixStack, tickDelta);
+        }
+
+        for (int i = 0; i < upperRightTexts.size(); i++) {
+            TextComponent text = upperLeftTexts.get(i);
+            if (text.width() == 0) continue;
+
+            int height = TextComponent.getLineHeight();
+            int width = text.width();
+            int boxX = MinecraftClient.getInstance().getWindow().getScaledWidth() - width - 2;
+            int boxY = 2 + height * i;
+
+            DrawableHelper.fill(matrixStack, boxX - 1, boxY - 1, boxX + width + 1, boxY + height - 1, 0x90505050);
+            text.render(matrixStack, tickDelta);
+        }
     }
 }
