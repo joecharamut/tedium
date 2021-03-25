@@ -26,6 +26,7 @@ import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.core.PlayerCore;
+import rocks.spaghetti.tedium.crafting.CraftingJob;
 import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.hud.DebugHud;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
@@ -214,12 +215,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         if (testKey.wasPressed()) {
-            BlockPos pos = client.player.getBlockPos().add(0, 3, 0);
-            client.interactionManager.interactBlock(
-                    client.player,
-                    client.world,
-                    Hand.MAIN_HAND,
-                    new BlockHitResult(Vec3d.ofBottomCenter(pos), Direction.NORTH, pos, false));
+            CraftingJob.calculate(Recipes.CRAFTING_TABLE, 24);
         }
 
         if (toggleDebugKey.wasPressed()) {

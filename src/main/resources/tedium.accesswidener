@@ -1,3 +1,9 @@
 accessWidener v1 named
 # FakePlayer
 extendable method net/minecraft/entity/mob/MobEntity tickNewAi ()V
+
+# Recipes
+extendable class net/minecraft/recipe/Ingredient
+accessible class net/minecraft/recipe/Ingredient$Entry
+accessible class net/minecraft/recipe/Ingredient$TagEntry
+accessible class net/minecraft/recipe/Ingredient$StackEntry

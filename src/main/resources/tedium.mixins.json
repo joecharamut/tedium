@@ -10,7 +10,9 @@
     "MouseMixin",
     "GoalSelectorMixin",
     "KeyBindingMixin",
-    "GameMenuScreenMixin"
+    "GameMenuScreenMixin",
+    "IngredientMixin",
+    "IngredientTagEntryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
