@@ -69,9 +69,9 @@ public class Util {
                 }
             }
 
-            FileWriter writer = new FileWriter(theFile);
-            writer.write(string);
-            writer.close();
+            try (FileWriter writer = new FileWriter(theFile)) {
+                writer.write(string);
+            }
         } catch (IOException e) {
             Log.catching(e);
         }
