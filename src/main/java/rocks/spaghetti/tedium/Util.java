@@ -6,9 +6,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
@@ -46,21 +44,57 @@ public class Util {
         );
     }
 
+    public static String readFileToString(File theFile) {
+        try {
+            InputStream is = new FileInputStream(theFile);
+            return readInputStreamToString(is);
+        } catch (FileNotFoundException e) {
+            Log.catching(e);
+        }
+
+        return "";
+    }
+
+    public static void writeStringToFile(File theFile, String string) {
+        try {
+            if (!theFile.exists()) {
+                if (!theFile.createNewFile()) {
+                    Log.fatal("Error writing to file `{}`!", theFile.toString());
+                    return;
+                }
+            } else {
+                if (!theFile.delete()) {
+                    Log.fatal("Error writing to file `{}`!", theFile.toString());
+                    return;
+                }
+            }
+
+            FileWriter writer = new FileWriter(theFile);
+            writer.write(string);
+            writer.close();
+        } catch (IOException e) {
+            Log.catching(e);
+        }
+    }
+
     public static String getResourceAsString(String resource) {
         InputStream is = Util.class.getClassLoader().getResourceAsStream(resource);
         if (is == null) return "";
+        return readInputStreamToString(is);
+    }
 
+    public static String readInputStreamToString(InputStream stream) {
         StringBuilder sb = new StringBuilder();
         int i;
         try {
-            while ((i = is.read()) != -1) {
+            while ((i = stream.read()) != -1) {
                 sb.append((char) i);
             }
         } catch (IOException e) {
             Log.catching(e);
         } finally {
             try {
-                is.close();
+                stream.close();
             } catch (IOException e) {
                 Log.catching(e);
             }

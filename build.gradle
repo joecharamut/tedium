@@ -33,16 +33,11 @@ repositories {
 	maven {
 		url = "https://maven.terraformersmc.com/"
 	}
-
-//	maven {
-//		url = "https://jitpack.io"
-//	}
 }
 
 dependencies {
 	implementation include(group: "io.herrmann", name: "java-generator-functions", version: "1.0")
 	implementation include(group: "org.nanohttpd", name: "nanohttpd", version: "2.3.1")
-//	implementation include(group: "com.github.LynnOwens", name: "starlite", version: "-SNAPSHOT")
 	implementation include(group: "org.javassist", name: "javassist", version: "3.27.0-GA")
 
 	// To change the versions see the gradle.properties file

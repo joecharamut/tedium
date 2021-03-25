@@ -6,33 +6,27 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import rocks.spaghetti.tedium.Util;
-import rocks.spaghetti.tedium.interaction.ClientInteractionHelper;
-import rocks.spaghetti.tedium.interaction.PlayerInventoryHelper;
-import rocks.spaghetti.tedium.interaction.action.BlockBreakAction;
-import rocks.spaghetti.tedium.interaction.action.CallbackAction;
-import rocks.spaghetti.tedium.interaction.action.ClientAction;
-import rocks.spaghetti.tedium.interaction.action.MoveAction;
 
 public class StripMiningAlgorithm {
-    public void loop(int count, MinecraftClient client, ClientInteractionHelper helper) {
+    public void loop(int count, MinecraftClient client) {
         for (int i = 0; i < count; i++) {
-            oneStep(client, helper);
+            oneStep(client);
         }
     }
 
-    public void oneStep(MinecraftClient client, ClientInteractionHelper helper) {
+    public void oneStep(MinecraftClient client) {
         BlockPos playerPos = client.player.getBlockPos();
         Vec3d lookVector = Util.Vec3fToVec3d(client.player.getMovementDirection().getUnitVector());
 
-        helper.enqueue(newActionGroup());
+//        helper.enqueue(newActionGroup());
     }
 
-    public static Generator<ClientAction> createActionTree() {
+    public static Generator<Object> createActionTree() {
         MinecraftClient client = MinecraftClient.getInstance();
         PlayerEntity player = client.player;
-        PlayerInventoryHelper inventoryHelper = new PlayerInventoryHelper();
+        PlayerInventoryHelper inventoryHelper = new PlayerInventoryHelper(null);
 
-        return new Generator<ClientAction>() {
+        return new Generator<Object>() {
             @Override
             protected void run() throws InterruptedException {
                 // begin
@@ -57,48 +51,48 @@ public class StripMiningAlgorithm {
                     // empty inventory to chests
                 }
 
-                this.yield(new BlockBreakAction(1, 1, 0)); // head block
-                this.yield(new BlockBreakAction(1, 0, 0)); // foot block
+//                this.yield(new BlockBreakAction(1, 1, 0)); // head block
+//                this.yield(new BlockBreakAction(1, 0, 0)); // foot block
 //                this.yield(new MoveAction(Util.Vec3fToVec3d(player.getMovementDirection().getUnitVector())));
             }
         };
     }
 
-    public ClientAction[] newActionGroup() {
-        /*
-        * begin
-        * check inventory
-        *   - if < x empty slots: tx some to shulkers/enderchest
-        * check block
-        *   - gravel, sand => deal with gravity (check above blocks w/ WorldView?)
-        *   - water, lava => panic
-        *   - monumentally cursed solution: Action subclass repr. action tree
-        * dig player hole
-        *   - switch to correct tool (impl. in BlockBreakAction?)
-        *   - place any blocks over lava/water
-        * move forwards
-        *   - ensure facing is DIRECTLY straight (no walking into lava here)
-        * "xray" any nearby ore (no eyes so its not REALLY xray right)
-        *   - if any: continue
-        *   - else: loop
-        * dig to ore
-        *   - similar to dig player hole
-        * mine vein
-        *   - good luck with this one
-        * return to corridor
-        * snap back to forward facing
-        * loop
-        *
-        * */
-        return new ClientAction[]{
-                new CallbackAction(() -> {
-
-                }),
-                new BlockBreakAction(1, 0, 0),
-                new BlockBreakAction(1, 1, 0),
-                new CallbackAction(() -> {
-                    // todo: check blocks
-                })
-        };
-    }
+//    public ClientAction[] newActionGroup() {
+//        /*
+//        * begin
+//        * check inventory
+//        *   - if < x empty slots: tx some to shulkers/enderchest
+//        * check block
+//        *   - gravel, sand => deal with gravity (check above blocks w/ WorldView?)
+//        *   - water, lava => panic
+//        *   - monumentally cursed solution: Action subclass repr. action tree
+//        * dig player hole
+//        *   - switch to correct tool (impl. in BlockBreakAction?)
+//        *   - place any blocks over lava/water
+//        * move forwards
+//        *   - ensure facing is DIRECTLY straight (no walking into lava here)
+//        * "xray" any nearby ore (no eyes so its not REALLY xray right)
+//        *   - if any: continue
+//        *   - else: loop
+//        * dig to ore
+//        *   - similar to dig player hole
+//        * mine vein
+//        *   - good luck with this one
+//        * return to corridor
+//        * snap back to forward facing
+//        * loop
+//        *
+//        * */
+//        return new ClientAction[]{
+//                new CallbackAction(() -> {
+//
+//                }),
+//                new BlockBreakAction(1, 0, 0),
+//                new BlockBreakAction(1, 1, 0),
+//                new CallbackAction(() -> {
+//                    // todo: check blocks
+//                })
+//        };
+//    }
 }

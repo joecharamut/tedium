@@ -1,6 +1,7 @@
 package rocks.spaghetti.tedium;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -12,21 +13,18 @@ import net.minecraft.client.options.Option;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotUtils;
-import net.minecraft.text.*;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
 import net.minecraft.util.Util;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.core.PlayerCore;
-import rocks.spaghetti.tedium.crafting.CraftingJob;
 import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.hud.DebugHud;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
@@ -34,7 +32,10 @@ import rocks.spaghetti.tedium.web.WebServer;
 
 import java.io.IOException;
 import java.net.BindException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -167,6 +168,7 @@ public class ClientEntrypoint implements ClientModInitializer {
     public void onInitializeClient() {
         Log.info("Hello from {}!", Constants.MOD_ID);
         ModConfig.register(null, this::onSaveConfig);
+        ModData.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(this::endClientTick);
 
@@ -181,6 +183,10 @@ public class ClientEntrypoint implements ClientModInitializer {
             if (debugEnabled) {
                 debugHud.render(matrixStack, tickDelta);
             }
+        });
+
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            ModData.saveGlobal();
         });
     }
 
@@ -215,7 +221,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         if (testKey.wasPressed()) {
-            CraftingJob.calculate(Recipes.CRAFTING_TABLE, 24);
+            sendClientMessage("hi!");
         }
 
         if (toggleDebugKey.wasPressed()) {

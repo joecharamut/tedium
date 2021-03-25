@@ -123,6 +123,7 @@ public class FakePlayer extends PathAwareEntity {
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
         this.goalSelector.add(10, new CraftItemGoal(this));
         this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
+        this.goalSelector.add(10, new BlockBreakGoal(this));
         this.goalSelector.add(256, mutableGoalSelector);
 
         Log.info("end initGoals()");
