@@ -23,14 +23,14 @@ public class ModConfig implements ConfigData {
     private static Consumer<ModConfig> loadCallback = null;
     @ConfigEntry.Gui.Excluded
     private static Consumer<ModConfig> saveCallback = null;
+    @ConfigEntry.Gui.Excluded
+    private static final int DEFAULT_WEB_SERVER_PORT = 8383;
 
 
     private boolean webServerEnabled = true;
+    private int webServerPort = DEFAULT_WEB_SERVER_PORT;
     private boolean enableFullbright = false;
 
-    @ConfigEntry.Gui.Excluded
-    private static final int DEFAULT_WEB_SERVER_PORT = 8383;
-    private int webServerPort = DEFAULT_WEB_SERVER_PORT;
 
     public static int getWebServerPort() {
         return getConfig().webServerPort;
