@@ -63,11 +63,6 @@ minecraft {
 	accessWidener = file("src/main/resources/tedium.accesswidener")
 }
 
-compileJava {
-	options.encoding = "UTF-8"
-	options.compilerArgs << "-XDenableSunApiLintControl" << "-Xlint:sunapi"
-}
-
 processResources {
 	inputs.property "version", project.version
 
