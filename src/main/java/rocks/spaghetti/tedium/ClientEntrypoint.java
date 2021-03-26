@@ -237,6 +237,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         assert client.player != null;
 
         // initialize everything for real
+        ModData.loadWorld();
         Recipes.initRecipes(client.world);
         playerCore = new PlayerCore();
 
@@ -244,12 +245,12 @@ public class ClientEntrypoint implements ClientModInitializer {
             try {
                 webServer.startServer();
                 registerWebContexts();
+                String webAddress = "http://localhost:" + ModConfig.getWebServerPort();
                 sendClientMessage(new TranslatableText("text.tedium.webServerStarted")
                         .formatted(Formatting.WHITE)
-                        .append(new LiteralText("http://localhost:" + ModConfig.getWebServerPort())
+                        .append(new LiteralText(webAddress)
                                 .formatted(Formatting.WHITE).formatted(Formatting.UNDERLINE)
-                                .styled(style -> style.withClickEvent(
-                                        new ClickEvent(ClickEvent.Action.OPEN_URL, "http://localhost:" + ModConfig.getWebServerPort())))));
+                                .styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, webAddress)))));
             } catch (BindException ex) {
                 sendClientMessage(new TranslatableText("text.tedium.webErrorStarting").formatted(Formatting.RED));
             }
@@ -257,6 +258,7 @@ public class ClientEntrypoint implements ClientModInitializer {
     }
 
     private void destroyComponents() {
+        ModData.saveWorld();
         playerCore = null;
 
         if (webServer.isRunning()) {

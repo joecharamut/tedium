@@ -22,12 +22,12 @@ public class ModData {
             Log.fatal("Error creating data directory!");
         }
         Log.info("Data directory: {}", dataDir);
-        globalFile = new File(dataDir, "global.json");
 
         loadGlobal();
     }
 
     public static void loadGlobal() {
+        globalFile = new File(dataDir, "global.json");
         if (globalFile.exists()) {
             GLOBAL = gson.fromJson(Util.readFileToString(globalFile), GlobalData.class);
         } else {
@@ -37,6 +37,29 @@ public class ModData {
 
     public static void saveGlobal() {
         Util.writeStringToFile(globalFile, gson.toJson(GLOBAL));
+    }
+
+    public static void loadWorld() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        String filename = "world-";
+        if (client.isInSingleplayer()) {
+            filename += client.getServer().getSaveProperties().getLevelName();
+        } else {
+            filename += "Multiplayer_";
+            filename += client.getCurrentServerEntry().address;
+        }
+        filename += ".json";
+
+        worldFile = new File(dataDir, filename);
+        if (worldFile.exists()) {
+            WORLD = gson.fromJson(Util.readFileToString(worldFile), WorldData.class);
+        } else {
+            WORLD = new WorldData();
+        }
+    }
+
+    public static void saveWorld() {
+        Util.writeStringToFile(worldFile, gson.toJson(WORLD));
     }
 
     private static class GlobalData {
