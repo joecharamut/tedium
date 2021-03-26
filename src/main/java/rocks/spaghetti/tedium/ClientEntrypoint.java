@@ -20,6 +20,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
@@ -45,12 +46,12 @@ public class ClientEntrypoint implements ClientModInitializer {
     private static final ExecutorQueue runInClientThread = new ExecutorQueue();
     private static boolean fakePlayerState = false;
     private static boolean disableInput = false;
+    private static boolean debugEnabled = false;
 
     private final WebServer webServer = new WebServer();
     private final DebugHud debugHud = new DebugHud();
     private PlayerCore playerCore = null;
     private boolean connected = false;
-    private boolean debugEnabled = false;
 
     private static final KeyBinding toggleAiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.tedium.toggleAi",
@@ -111,6 +112,10 @@ public class ClientEntrypoint implements ClientModInitializer {
 
     public static boolean isInputDisabled() {
         return disableInput;
+    }
+
+    public static boolean isDebugEnabled() {
+        return debugEnabled;
     }
 
     public static void onGameMenuOpened() {
@@ -191,6 +196,13 @@ public class ClientEntrypoint implements ClientModInitializer {
         });
 
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::renderEventHandler);
+        RenderHelper.addListener(() -> {
+            if (MinecraftClient.getInstance().player == null) return;
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(
+                    new BlockPos(205, 64, -120),
+                    0xff00ff
+            ));
+        });
     }
 
     private void onSaveConfig(ModConfig config) {

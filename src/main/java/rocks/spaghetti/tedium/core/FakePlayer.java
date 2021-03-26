@@ -1,5 +1,6 @@
 package rocks.spaghetti.tedium.core;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import net.minecraft.client.MinecraftClient;
@@ -18,15 +19,20 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
+import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.RenderHelper;
 import rocks.spaghetti.tedium.core.ai.*;
 import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
 
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 // FakePlayer -> PathAwareEntity -> MobEntity -> LivingEntity -> Entity
@@ -36,7 +42,6 @@ public class FakePlayer extends PathAwareEntity {
     private static FakePlayer imposter = null;
 
     private final ClientPlayerEntity realPlayer;
-    private final MutableGoalSelector mutableGoalSelector;
 
     public FakePlayer(ClientPlayerEntity realPlayer) {
         super(EntityType.ZOMBIE, realPlayer.world);
@@ -45,7 +50,8 @@ public class FakePlayer extends PathAwareEntity {
 
         this.lookControl = new FakeLookControl(this);
         this.jumpControl = new FakeJumpControl(this);
-        this.mutableGoalSelector = new MutableGoalSelector(this);
+
+        RenderHelper.addListener(this::onRender);
 
         initGoals();
     }
@@ -124,7 +130,6 @@ public class FakePlayer extends PathAwareEntity {
         this.goalSelector.add(10, new CraftItemGoal(this));
         this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
         this.goalSelector.add(10, new BlockBreakGoal(this));
-        this.goalSelector.add(256, mutableGoalSelector);
 
         Log.info("end initGoals()");
     }
@@ -158,6 +163,15 @@ public class FakePlayer extends PathAwareEntity {
             this.moveControl.tick();
             this.lookControl.tick();
             this.jumpControl.tick();
+        }
+    }
+
+    private void onRender() {
+        if (!ClientEntrypoint.isDebugEnabled()) return;
+
+        BlockPos navTarget = this.getNavigation().getTargetPos();
+        if (navTarget != null) {
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(navTarget, Color.GREEN.getRGB()));
         }
     }
 
