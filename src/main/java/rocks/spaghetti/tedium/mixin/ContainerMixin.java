@@ -2,6 +2,7 @@ package rocks.spaghetti.tedium.mixin;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +20,8 @@ public abstract class ContainerMixin {
 
     @Inject(method = "updateSlotStacks", at = @At("HEAD"))
     public void onUpdateSlotStacks(List<ItemStack> stacks, CallbackInfo info) {
+        if (this.getClass().equals(PlayerScreenHandler.class)) return;
+
         current = this.getClass();
         Log.info("cls: {}", current);
         if (stacks.size() < 36) return;

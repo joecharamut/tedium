@@ -1,8 +1,6 @@
 package rocks.spaghetti.tedium;
 
 import net.minecraft.client.util.math.Vector3f;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
@@ -10,39 +8,6 @@ import java.io.*;
 
 public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
-
-    public static Vec3d applyOffsetWithFacing(Direction facing, Vec3d pos, Vec3d offset) {
-        Vec3d outputPos = pos.add(0, offset.getY(), 0);
-
-        Direction.Axis axis = facing.getAxis();
-        Direction.AxisDirection axisDirection = facing.getDirection();
-
-        if (axis == Direction.Axis.X) {
-            if (axisDirection == Direction.AxisDirection.POSITIVE) {
-                outputPos = outputPos.add(offset.getX(), 0, offset.getZ());
-            } else {
-                outputPos = outputPos.add(-offset.getX(), 0, -offset.getZ());
-            }
-        } else if (axis == Direction.Axis.Z) {
-            if (axisDirection == Direction.AxisDirection.POSITIVE) {
-                outputPos = outputPos.add(offset.getZ(), 0, offset.getX());
-            } else {
-                outputPos = outputPos.add(-offset.getZ(), 0, -offset.getX());
-            }
-        }
-
-        return outputPos;
-    }
-
-    public static BlockPos applyOffsetWithFacing(Direction facing, BlockPos pos, Vec3i offset) {
-        return new BlockPos(
-                applyOffsetWithFacing(
-                        facing,
-                        new Vec3d(pos.getX(), pos.getY(), pos.getZ()),
-                        new Vec3d(offset.getX(), offset.getY(), offset.getZ())
-                )
-        );
-    }
 
     public static String readFileToString(File theFile) {
         try {
@@ -139,5 +104,15 @@ public class Util {
     @SuppressWarnings("java:S100")
     public static Vector3f Vec3dToVec3f(Vec3d input) {
         return new Vector3f((float) input.x, (float) input.y, (float) input.z);
+    }
+
+    @SuppressWarnings("java:S100")
+    public static Vec3d Vec3iToVec3d(Vec3i input) {
+        return new Vec3d(input.getX(), input.getY(), input.getZ());
+    }
+
+    public static double round(double input, int decimals) {
+        double multiplier = decimals * 10.0D;
+        return Math.round(input * multiplier) / multiplier;
     }
 }

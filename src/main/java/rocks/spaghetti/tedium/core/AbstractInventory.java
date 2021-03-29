@@ -52,6 +52,10 @@ public class AbstractInventory {
         client.interactionManager.clickSlot(screen.syncId, from, 0, SlotActionType.PICKUP, client.player);
     }
 
+    public List<ItemStack> getExternalStacks() {
+        return externalStacks;
+    }
+
     public void close() {
         screen.close(client.player);
     }

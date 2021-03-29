@@ -7,8 +7,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.options.GameOptions;
@@ -22,10 +20,6 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
@@ -135,6 +129,10 @@ public class ClientEntrypoint implements ClientModInitializer {
         currentContainer = newContainer;
     }
 
+    public static AbstractInventory getOpenContainer() {
+        return currentContainer;
+    }
+
     private static void toggleFakePlayerState() {
         setFakePlayerState(!fakePlayerState);
     }
@@ -217,7 +215,6 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
     }
 
-    private Promise test = new Promise();
     private void endClientTick(MinecraftClient client) {
         if (connected && client.player == null && client.world == null) {
             // client disconnected from world
@@ -243,22 +240,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         if (testKey.wasPressed()) {
             new ScriptEnvironment().execResource("script/indexChests.js");
-            if (false && client.crosshairTarget != null && client.crosshairTarget.getType() == HitResult.Type.BLOCK) {
-                BlockPos hit = ((BlockHitResult) client.crosshairTarget).getBlockPos();
-                BlockState block = client.world.getBlockState(hit);
-                if (block.getBlock().is(Blocks.CHEST)) {
-                    test = new Promise()
-//                            .then(() -> client.interactionManager.interactBlock(client.player, client.world, Hand.MAIN_HAND, (BlockHitResult) client.crosshairTarget))
-                            .then(() -> InteractionManager.pushEvent(new InteractionManager.BlockInteractEvent(hit)))
-                            .waitFor(() -> currentContainer != null)
-                            .then(() -> currentContainer.swapStacks(0, 1))
-//                            .then(() -> client.currentScreen.keyPressed(GLFW.GLFW_KEY_ESCAPE, -1, -1))
-                    ;
-                }
-            }
         }
-
-        if (!test.isDone()) test.runStep();
 
         if (toggleDebugKey.wasPressed()) {
             debugEnabled = !debugEnabled;

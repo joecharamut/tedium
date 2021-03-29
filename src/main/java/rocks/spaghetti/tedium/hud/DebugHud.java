@@ -3,6 +3,7 @@ package rocks.spaghetti.tedium.hud;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ai.goal.PrioritizedGoal;
 import net.minecraft.util.Formatting;
+import rocks.spaghetti.tedium.Util;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.hud.components.HudComponent;
 import rocks.spaghetti.tedium.hud.components.TextGridComponent;
@@ -21,6 +22,7 @@ public class DebugHud implements Hud {
         FakePlayer fakePlayer;
         if ((fakePlayer = FakePlayer.get()) != null && !fakePlayer.isAiDisabled()) {
             textGrid.upperLeft("State: AI", Formatting.GOLD);
+            textGrid.upperLeft(String.format("Position: %.2f %.2f %.2f", fakePlayer.getX(), fakePlayer.getY(), fakePlayer.getZ()));
             textGrid.upperLeft("");
             textGrid.upperLeft("Goals:");
 

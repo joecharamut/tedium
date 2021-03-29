@@ -118,16 +118,12 @@ public class FakePlayer extends PathAwareEntity {
 
     @Override
     protected void initGoals() {
-        Log.info("initGoals()");
-
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(0, new EatFoodGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
-        this.goalSelector.add(2, new GoToWalkTargetGoal(this, 1.0F));
+        this.goalSelector.add(2, new WalkTargetGoal(this));
         this.goalSelector.add(10, new CraftItemGoal(this));
         this.goalSelector.add(10, new BlockBreakGoal(this));
-
-        Log.info("end initGoals()");
     }
 
     public List<PrioritizedGoal> getRunningGoals() {
@@ -195,7 +191,6 @@ public class FakePlayer extends PathAwareEntity {
 
         @Override
         public void tick(boolean slowDown) {
-//            Log.info("input tick: fw {} sd {}", forwardSpeed, sidewaysSpeed);
             this.pressingForward = forwardSpeed > 0;
             this.pressingBack = forwardSpeed < 0;
             this.pressingRight = sidewaysSpeed > 0;
