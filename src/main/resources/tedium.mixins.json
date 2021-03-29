@@ -12,7 +12,9 @@
     "KeyBindingMixin",
     "GameMenuScreenMixin",
     "IngredientMixin",
-    "IngredientTagEntryMixin"
+    "IngredientTagEntryMixin",
+    "ContainerMixin",
+    "ClientConnectionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

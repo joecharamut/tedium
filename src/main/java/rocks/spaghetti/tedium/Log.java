@@ -35,4 +35,8 @@ public class Log {
     public static void catching(Throwable throwable) {
         LOGGER.catching(throwable);
     }
+
+    public static Logger getLogger() {
+        return LOGGER;
+    }
 }

@@ -1,6 +1,5 @@
 package rocks.spaghetti.tedium.core;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import net.minecraft.client.MinecraftClient;
@@ -9,9 +8,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.control.BodyControl;
 import net.minecraft.entity.ai.control.JumpControl;
-import net.minecraft.entity.ai.control.LookControl;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.EntityAttribute;
@@ -21,7 +18,6 @@ import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
 import rocks.spaghetti.tedium.RenderHelper;
@@ -48,7 +44,6 @@ public class FakePlayer extends PathAwareEntity {
         this.realPlayer = realPlayer;
         this.setAiDisabled(true);
 
-        this.lookControl = new FakeLookControl(this);
         this.jumpControl = new FakeJumpControl(this);
 
         RenderHelper.addListener(this::onRender);
@@ -67,13 +62,15 @@ public class FakePlayer extends PathAwareEntity {
                 .add(EntityAttributes.GENERIC_ARMOR, 2.0D)
         .build());
 
-        List<Method> exclusions = Collections.emptyList();
+        List<Method> exclusions = new ArrayList<>();
         try {
-             exclusions = Arrays.asList(
+             exclusions.addAll(Arrays.asList(
                      Entity.class.getMethod("updatePosition", double.class, double.class, double.class),
                      Entity.class.getMethod("setPos", double.class, double.class, double.class),
-                     Entity.class.getMethod("setBoundingBox", Box.class)
-             );
+                     Entity.class.getMethod("setBoundingBox", Box.class),
+                     ClientPlayerEntity.class.getMethod("tick")
+             ));
+             exclusions.addAll(Arrays.asList(FakePlayer.class.getDeclaredMethods()));
         } catch (NoSuchMethodException e) { Log.catching(e); }
 
         Map<Method, Method> playerMethods = new HashMap<>();
@@ -91,10 +88,9 @@ public class FakePlayer extends PathAwareEntity {
             Method redirect = playerMethods.getOrDefault(thisMethod, null);
             if (redirect != null) {
                 return redirect.invoke(realPlayer, args);
+            } else {
+                return proceed.invoke(self, args);
             }
-
-            Log.error("Handler: Could not invoke {}({})", thisMethod.getName(), Arrays.toString(thisMethod.getParameters()));
-            return null;
         };
 
         try {
@@ -127,8 +123,8 @@ public class FakePlayer extends PathAwareEntity {
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(0, new EatFoodGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.0F));
+        this.goalSelector.add(2, new GoToWalkTargetGoal(this, 1.0F));
         this.goalSelector.add(10, new CraftItemGoal(this));
-        this.goalSelector.add(10, new GoToWalkTargetGoal(this, 1.0F));
         this.goalSelector.add(10, new BlockBreakGoal(this));
 
         Log.info("end initGoals()");
@@ -157,13 +153,24 @@ public class FakePlayer extends PathAwareEntity {
     @Override
     public void tickNewAi() {
         if (!this.isAiDisabled()) {
-            if (realPlayer != null) super.updatePosition(realPlayer.getX(), realPlayer.getY(), realPlayer.getZ());
+            if (realPlayer != null) {
+                super.updatePosition(realPlayer.getX(), realPlayer.getY(), realPlayer.getZ());
+                realPlayer.yaw = this.yaw;
+                realPlayer.pitch = this.pitch;
+            }
+
             this.goalSelector.tick();
             this.navigation.tick();
             this.moveControl.tick();
             this.lookControl.tick();
             this.jumpControl.tick();
+            this.tick();
         }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
     }
 
     private void onRender() {
@@ -171,7 +178,11 @@ public class FakePlayer extends PathAwareEntity {
 
         BlockPos navTarget = this.getNavigation().getTargetPos();
         if (navTarget != null) {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(navTarget, Color.GREEN.getRGB()));
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(navTarget, new Color(0x00CCFF).getRGB()));
+        }
+
+        if (this.hasPositionTarget()) {
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(this.getPositionTarget(), new Color(0x00ff00).getRGB()));
         }
     }
 
@@ -184,6 +195,7 @@ public class FakePlayer extends PathAwareEntity {
 
         @Override
         public void tick(boolean slowDown) {
+//            Log.info("input tick: fw {} sd {}", forwardSpeed, sidewaysSpeed);
             this.pressingForward = forwardSpeed > 0;
             this.pressingBack = forwardSpeed < 0;
             this.pressingRight = sidewaysSpeed > 0;
@@ -213,32 +225,6 @@ public class FakePlayer extends PathAwareEntity {
         }
     }
 
-    private class FakeLookControl extends LookControl {
-        public FakeLookControl(MobEntity entity) {
-            super(entity);
-        }
-
-        @Override
-        public void tick() {
-            if (this.shouldStayHorizontal()) {
-                realPlayer.pitch = 0.0F;
-            }
-
-            if (this.active) {
-                this.active = false;
-                realPlayer.yaw = this.changeAngle(realPlayer.yaw, this.getTargetYaw(), this.yawSpeed);
-                realPlayer.pitch = this.changeAngle(realPlayer.pitch, this.getTargetPitch(), this.pitchSpeed);
-            } else {
-                realPlayer.yaw = this.changeAngle(realPlayer.yaw, realPlayer.bodyYaw, 10.0F);
-            }
-
-            if (!getNavigation().isIdle()) {
-                realPlayer.yaw = MathHelper.stepAngleTowards(realPlayer.yaw, realPlayer.bodyYaw, 1.0f);
-            }
-
-        }
-    }
-
     private class FakeJumpControl extends JumpControl {
         public FakeJumpControl(MobEntity entity) {
             super(entity);
@@ -249,24 +235,6 @@ public class FakePlayer extends PathAwareEntity {
             realPlayer.input.jumping = this.active;
             this.active = false;
         }
-    }
-
-    private class FakeBodyControl extends BodyControl {
-        public FakeBodyControl(MobEntity entity) {
-            super(entity);
-            assert realPlayer != null;
-        }
-
-        @Override
-        public void tick() {
-            Log.error("STUB: FakeBodyControl.tick()");
-            super.tick();
-        }
-    }
-
-    @Override
-    protected BodyControl createBodyControl() {
-        return new FakeBodyControl(this);
     }
 
     @Override

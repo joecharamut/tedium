@@ -28,8 +28,6 @@ public class DebugHud implements Hud {
                 Formatting status;
                 if (fakePlayer.getRunningGoals().contains(goal)) {
                     status = Formatting.GREEN;
-                } else if (goal.canStart()) {
-                    status = Formatting.YELLOW;
                 } else {
                     status = Formatting.RED;
                 }
