@@ -124,7 +124,7 @@ public class ScriptEnvironment {
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class SysMethods {
-            public void println(String msg) {
+            public void log(String msg) {
                 Log.info("[Script] {}", msg);
             }
         }
@@ -156,6 +156,15 @@ public class ScriptEnvironment {
                 while (ClientEntrypoint.getOpenContainer() == null) { Thread.sleep(100); }
 
                 return ClientEntrypoint.getOpenContainer().getExternalStacks();
+            }
+
+            public boolean quickMoveStack(int slot) {
+                FakePlayer player = FakePlayer.get();
+                if (player == null) return false;
+                AbstractInventory container = ClientEntrypoint.getOpenContainer();
+                if (container == null) return false;
+                container.quickMoveStack(slot);
+                return true;
             }
 
             public void closeContainer() {

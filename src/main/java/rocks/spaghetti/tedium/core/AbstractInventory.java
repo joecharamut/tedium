@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,9 +48,18 @@ public class AbstractInventory {
 
     public void swapStacks(int from, int to) {
         if (client.interactionManager == null) return;
+        if (from < 0 || from >= allSlots.size() || to < 0 || to >= allSlots.size()) return;
+
         client.interactionManager.clickSlot(screen.syncId, from, 0, SlotActionType.PICKUP, client.player);
         client.interactionManager.clickSlot(screen.syncId, to, 0, SlotActionType.PICKUP, client.player);
         client.interactionManager.clickSlot(screen.syncId, from, 0, SlotActionType.PICKUP, client.player);
+    }
+
+    public void quickMoveStack(int from) {
+        if (client.interactionManager == null) return;
+        if (from < 0 || from >= allSlots.size()) return;
+
+        client.interactionManager.clickSlot(screen.syncId, from, 0, SlotActionType.QUICK_MOVE, client.player);
     }
 
     public List<ItemStack> getExternalStacks() {
@@ -57,7 +67,9 @@ public class AbstractInventory {
     }
 
     public void close() {
-        screen.close(client.player);
+        if (client.currentScreen != null) {
+            client.currentScreen.keyPressed(GLFW.GLFW_KEY_ESCAPE, -1, -1);
+        }
     }
 
     @Override

@@ -1,14 +1,19 @@
-sys.println("begin script");
+"use strict";
+
+sys.log("begin script");
 
 minecraft.goToBlock(215, 66, -122);
 
-var items = minecraft.openContainerAt(217, 66, -122);
+const items = minecraft.openContainerAt(217, 66, -122);
+let i;
 
-for (var i = 0; i < items.size(); i++) {
-    var item = items[i];
-    if (!item.getItem().toString().equals("air")) {
-        sys.println(items[i]);
+for (i = 0; i < items.size(); i++) {
+    let item = items[i];
+    if (item.getItem().toString() !== "air") {
+        minecraft.quickMoveStack(i);
     }
 }
 
-sys.println("finished");
+minecraft.closeContainer();
+
+sys.log("finished");
