@@ -13,8 +13,7 @@
     "GameMenuScreenMixin",
     "IngredientMixin",
     "IngredientTagEntryMixin",
-    "ContainerMixin",
-    "ClientConnectionMixin"
+    "ContainerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
