@@ -1,19 +1,23 @@
 "use strict";
 
-sys.log("begin script");
-
-minecraft.goToBlock(215, 66, -122);
-
-const items = minecraft.openContainerAt(217, 66, -122);
-let i;
-
-for (i = 0; i < items.size(); i++) {
-    let item = items[i];
-    if (item.getItem().toString() !== "air") {
-        minecraft.quickMoveStack(i);
+(function() {
+    minecraft.sendMessage("Hello from Script World");
+    if (!minecraft.aiEnabled()) {
+        minecraft.sendMessage("AI not enabled, exiting");
+        return;
     }
-}
 
-minecraft.closeContainer();
+    minecraft.goToBlock(215, 66, -122);
 
-sys.log("finished");
+    let stacks = minecraft.openContainerAt(217, 66, -122);
+    for (let i = 0; i < stacks.length; i++) {
+        let stack = stacks[i];
+        if (stack.getItem() !== "air") {
+            minecraft.quickMoveStack(i);
+        }
+    }
+
+    minecraft.closeContainer();
+
+    minecraft.sendMessage("Script Finished");
+})();

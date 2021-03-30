@@ -8,8 +8,8 @@
     "Joe"
   ],
   "contact": {
-    "homepage": "https://www.spaghetti.rocks/",
-    "sources": "https://www.example.com/"
+    "homepage": "https://github.com/joecharamut/tedium/wiki",
+    "sources": "https://github.com/joecharamut/tedium"
   },
   "license": "GPL-3.0-only",
   "icon": "assets/tedium/icon.png",

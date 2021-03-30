@@ -1,11 +1,14 @@
 package rocks.spaghetti.tedium.script;
 
+import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.HostAccess;
 import org.jetbrains.annotations.NotNull;
-import org.mozilla.javascript.*;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
 import rocks.spaghetti.tedium.Util;
@@ -13,10 +16,8 @@ import rocks.spaghetti.tedium.core.AbstractInventory;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 
+import javax.script.*;
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
@@ -26,19 +27,6 @@ import java.util.concurrent.Executor;
 public class ScriptEnvironment {
     private final ScriptExecutor scriptExecutor = new ScriptExecutor();
 
-    public void eval(String code) {
-        try (Scope scope = new Scope()) {
-            Log.info("eval> {}", code);
-            Object result = scope.execScript(scope.compile(code, "<eval>"));
-            Log.info("eval> {}", scope.toString(result));
-        } catch (RhinoException e) {
-            Log.error("Script Error: {}", e.getMessage());
-        } catch (Exception e) {
-            Log.error("Unhandled Exception: {}", e.getClass());
-            Log.catching(e);
-        }
-    }
-
     public void execResource(String resourceLocation) {
         scriptExecutor.execute(() -> {
             try (Scope scope = new Scope()) {
@@ -47,10 +35,7 @@ public class ScriptEnvironment {
                     Log.warn("Failed to load resource!");
                     return;
                 }
-                Script script = scope.compile(code, resourceLocation);
-                scope.execScript(script);
-            } catch (RhinoException e) {
-                Log.error("Script Error: {}", e.getMessage());
+                scope.eval(code);
             } catch (Exception e) {
                 Log.error("Unhandled Exception: {}", e.getClass());
                 Log.catching(e);
@@ -89,48 +74,48 @@ public class ScriptEnvironment {
     }
 
     private static class Scope implements Closeable {
-        private final Context context;
-        private final Scriptable scriptScope;
+        private final GraalJSScriptEngine engine;
 
         public Scope() {
-            context = Context.enter();
-            scriptScope = context.initStandardObjects();
-            Object sysWrapper = Context.javaToJS(new SysMethods(), scriptScope);
-            ScriptableObject.putProperty(scriptScope, "sys", sysWrapper);
-            Object apiWrapper = Context.javaToJS(new MinecraftApi(), scriptScope);
-            ScriptableObject.putProperty(scriptScope, "minecraft", apiWrapper);
+            engine = GraalJSScriptEngine.create(null,
+                    Context.newBuilder("js")
+                    .allowHostAccess(HostAccess.ALL)
+                    .allowHostClassLookup(s -> true)
+                    .option("js.ecmascript-version", "2021")
+            );
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put("sys", new SysMethods());
+            bindings.put("minecraft", new MinecraftApi());
         }
 
-        public Script compile(String source, String sourceName) throws IOException {
-            return compile(new StringReader(source), sourceName);
-        }
-
-        public Script compile(Reader reader, String sourceName) throws IOException {
-            return context.compileReader(reader, sourceName, 0, null);
-        }
-
-        public Object execScript(Script script) {
-            return script.exec(context, scriptScope);
+        public Object eval(String source) throws ScriptException {
+            return engine.eval(source, engine.getContext());
         }
 
         @Override
         public void close() {
-            Context.exit();
-        }
-
-        public String toString(Object result) {
-            return Context.toString(result);
+            engine.close();
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class SysMethods {
-            public void log(String msg) {
+            public void log(Object msg) {
                 Log.info("[Script] {}", msg);
             }
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class MinecraftApi {
+            public void sendMessage(String message) {
+                ClientEntrypoint.sendClientMessage(message);
+            }
+
+            public boolean aiEnabled() {
+                FakePlayer player = FakePlayer.get();
+                if (player == null) return false;
+                return !player.isAiDisabled();
+            }
+
             public void goToBlock(int x, int y, int z) throws InterruptedException {
                 FakePlayer player = FakePlayer.get();
                 if (player == null) return;
@@ -173,6 +158,19 @@ public class ScriptEnvironment {
                 AbstractInventory container = ClientEntrypoint.getOpenContainer();
                 if (container == null) return;
                 container.close();
+            }
+
+            public BlockPos getPos() {
+                FakePlayer player = FakePlayer.get();
+                if (player == null) return null;
+                return player.getBlockPos();
+            }
+
+            public BlockState getBlockStateAt(int x, int y, int z) {
+                FakePlayer player = FakePlayer.get();
+                if (player == null) return null;
+
+                return player.world.getBlockState(new BlockPos(x, y, z));
             }
         }
     }
