@@ -2,7 +2,6 @@ package rocks.spaghetti.tedium;
 
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -202,10 +201,6 @@ public class ClientEntrypoint implements ClientModInitializer {
             }
         });
 
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-            ModData.saveGlobal();
-        });
-
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::renderEventHandler);
     }
 
@@ -234,16 +229,17 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         InteractionManager.tick();
 
-        if (toggleAiKey.wasPressed()) {
-            toggleFakePlayerState();
+        while (toggleAiKey.wasPressed()) {
+            client.openScreen(ControlGui.createScreen());
+//            toggleFakePlayerState();
         }
 
-        if (testKey.wasPressed()) {
-            new ScriptEnvironment().execResource("script/indexChests.js");
-        }
-
-        if (toggleDebugKey.wasPressed()) {
+        while (toggleDebugKey.wasPressed()) {
             debugEnabled = !debugEnabled;
+        }
+
+        while (testKey.wasPressed()) {
+            ScriptEnvironment.getInstance().execResource("script/indexChests.js");
         }
 
         runInClientThread.runNext();

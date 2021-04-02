@@ -6,13 +6,10 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.Option;
 import net.minecraft.util.ActionResult;
 import rocks.spaghetti.tedium.Constants;
 import rocks.spaghetti.tedium.Log;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 @Config(name = Constants.MOD_ID)

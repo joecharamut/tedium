@@ -9,6 +9,18 @@ import java.io.*;
 public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
 
+    public static void openFile(File file) {
+        net.minecraft.util.Util.getOperatingSystem().open(file);
+    }
+
+    public static void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     public static String readFileToString(File theFile) {
         try {
             InputStream is = new FileInputStream(theFile);

@@ -18,23 +18,45 @@ import rocks.spaghetti.tedium.core.InteractionManager;
 
 import javax.script.*;
 import java.io.Closeable;
+import java.io.File;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Executor;
+import java.util.function.BooleanSupplier;
 
 public class ScriptEnvironment {
+    private static ScriptEnvironment INSTANCE = null;
     private final ScriptExecutor scriptExecutor = new ScriptExecutor();
 
+    private ScriptEnvironment() {
+        if (FakePlayer.get() == null) {
+            throw new IllegalStateException("ScriptEnvironment APIs require FakePlayer");
+        }
+    }
+
+    public static ScriptEnvironment getInstance() {
+        if (INSTANCE == null) INSTANCE = new ScriptEnvironment();
+        return INSTANCE;
+    }
+
     public void execResource(String resourceLocation) {
+        execString(Util.getResourceAsString(resourceLocation));
+    }
+
+    public void execFile(File scriptFile) {
+        execString(Util.readFileToString(scriptFile));
+    }
+
+    private void execString(String code) {
+        if (code.isEmpty()) {
+            Log.warn("Not running empty string!");
+            return;
+        }
+
         scriptExecutor.execute(() -> {
             try (Scope scope = new Scope()) {
-                String code = Util.getResourceAsString(resourceLocation);
-                if (code.isEmpty()) {
-                    Log.warn("Failed to load resource!");
-                    return;
-                }
                 scope.eval(code);
             } catch (Exception e) {
                 Log.error("Unhandled Exception: {}", e.getClass());
@@ -59,7 +81,7 @@ public class ScriptEnvironment {
 
         @Override
         public void run() {
-            while (!Thread.interrupted()) {
+            while (!isInterrupted()) {
                 if (!runQueue.isEmpty()) {
                     runQueue.poll().run();
                 }
@@ -84,7 +106,7 @@ public class ScriptEnvironment {
                     .option("js.ecmascript-version", "2021")
             );
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("sys", new SysMethods());
+            bindings.put("sys", new SysApi());
             bindings.put("minecraft", new MinecraftApi());
         }
 
@@ -98,7 +120,7 @@ public class ScriptEnvironment {
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
-        public static class SysMethods {
+        public static class SysApi {
             public void log(Object msg) {
                 Log.info("[Script] {}", msg);
             }
@@ -106,70 +128,67 @@ public class ScriptEnvironment {
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class MinecraftApi {
+            private static void waitWhile(BooleanSupplier condition) {
+                while (condition.getAsBoolean() && !Thread.currentThread().isInterrupted()) {
+                    Util.sleep(100);
+                }
+            }
+
             public void sendMessage(String message) {
                 ClientEntrypoint.sendClientMessage(message);
             }
 
             public boolean aiEnabled() {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return false;
                 return !player.isAiDisabled();
             }
 
-            public void goToBlock(int x, int y, int z) throws InterruptedException {
+            public void goToBlock(int x, int y, int z) {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return;
-
                 BlockPos dest = new BlockPos(x, y, z);
-                int range = 1;
 
+                int range = 1;
                 player.setPositionTarget(dest, range);
 
-                while (player.squaredDistanceTo(Util.Vec3iToVec3d(dest)) > range+2) { Thread.sleep(100); }
+                waitWhile(() -> player.squaredDistanceTo(Util.Vec3iToVec3d(dest)) > range+2);
             }
 
-            public List<ItemStack> openContainerAt(int x, int y, int z) throws InterruptedException {
+            public List<ItemStack> openContainerAt(int x, int y, int z) {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return Collections.emptyList();
-
                 BlockPos blockPos = new BlockPos(x, y, z);
+
                 Block block = player.world.getBlockState(blockPos).getBlock();
                 if (!block.is(Blocks.CHEST)) return Collections.emptyList();
-
-
                 InteractionManager.pushEvent(new InteractionManager.BlockInteractEvent(blockPos));
-                while (ClientEntrypoint.getOpenContainer() == null) { Thread.sleep(100); }
 
+                waitWhile(() -> ClientEntrypoint.getOpenContainer() == null);
                 return ClientEntrypoint.getOpenContainer().getExternalStacks();
             }
 
             public boolean quickMoveStack(int slot) {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return false;
                 AbstractInventory container = ClientEntrypoint.getOpenContainer();
                 if (container == null) return false;
+
                 container.quickMoveStack(slot);
                 return true;
             }
 
             public void closeContainer() {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return;
                 AbstractInventory container = ClientEntrypoint.getOpenContainer();
                 if (container == null) return;
+
                 container.close();
             }
 
             public BlockPos getPos() {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return null;
                 return player.getBlockPos();
             }
 
             public BlockState getBlockStateAt(int x, int y, int z) {
                 FakePlayer player = FakePlayer.get();
-                if (player == null) return null;
-
                 return player.world.getBlockState(new BlockPos(x, y, z));
             }
         }

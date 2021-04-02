@@ -22,11 +22,6 @@ repositories {
 	}
 
 	maven {
-		name = "java-generator-functions"
-		url = "https://dl.bintray.com/filipmalczak/maven"
-	}
-
-	maven {
 		url = "https://maven.shedaniel.me/"
 	}
 
@@ -36,7 +31,6 @@ repositories {
 }
 
 dependencies {
-	implementation include(group: "io.herrmann", name: "java-generator-functions", version: "1.0")
 	implementation include(group: "org.nanohttpd", name: "nanohttpd", version: "2.3.1")
 	implementation include(group: "org.javassist", name: "javassist", version: "3.27.0-GA")
 
