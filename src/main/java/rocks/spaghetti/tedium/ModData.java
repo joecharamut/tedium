@@ -5,6 +5,7 @@ import net.minecraft.client.MinecraftClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -44,7 +45,7 @@ public class ModData {
     public static File[] getGlobalFiles() {
         File[] output = new File[0];
 
-        try (Stream<Path> files = Files.walk(globalDir.toPath())) {
+        try (Stream<Path> files = Files.walk(globalDir.toPath(), FileVisitOption.FOLLOW_LINKS)) {
             output = files
                     .filter(Files::isRegularFile)
                     .map(Path::toFile)

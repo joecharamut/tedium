@@ -1,16 +1,16 @@
 // stubs for ScriptEnvironment
 
-class sys {
+class Sys {
     /** @param {any} obj */
     static log(obj);
 }
 
-class minecraft {
+class Minecraft {
     /** @param {string} message */
     static sendMessage(message);
 
     /** @return {boolean} */
-    static aiEnabled();
+    static isAiDisabled();
 
     /**
      * @param {number} x

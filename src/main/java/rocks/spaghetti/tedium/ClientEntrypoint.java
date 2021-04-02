@@ -132,11 +132,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         return currentContainer;
     }
 
-    private static void toggleFakePlayerState() {
-        setFakePlayerState(!fakePlayerState);
-    }
-
-    private static void setFakePlayerState(boolean enabled) {
+    public static void setFakePlayerState(boolean enabled) {
         fakePlayerState = enabled;
 
         FakePlayer fake = FakePlayer.get();
@@ -230,8 +226,8 @@ public class ClientEntrypoint implements ClientModInitializer {
         InteractionManager.tick();
 
         while (toggleAiKey.wasPressed()) {
+            setFakePlayerState(false);
             client.openScreen(ControlGui.createScreen());
-//            toggleFakePlayerState();
         }
 
         while (toggleDebugKey.wasPressed()) {

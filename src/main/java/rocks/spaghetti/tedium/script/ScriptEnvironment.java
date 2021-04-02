@@ -1,13 +1,16 @@
 package rocks.spaghetti.tedium.script;
 
+import com.oracle.truffle.js.runtime.JSException;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.*;
 import org.jetbrains.annotations.NotNull;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
@@ -19,6 +22,8 @@ import rocks.spaghetti.tedium.core.InteractionManager;
 import javax.script.*;
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +32,7 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
 public class ScriptEnvironment {
-    private static ScriptEnvironment INSTANCE = null;
+    private static ScriptEnvironment instance = null;
     private final ScriptExecutor scriptExecutor = new ScriptExecutor();
 
     private ScriptEnvironment() {
@@ -37,8 +42,8 @@ public class ScriptEnvironment {
     }
 
     public static ScriptEnvironment getInstance() {
-        if (INSTANCE == null) INSTANCE = new ScriptEnvironment();
-        return INSTANCE;
+        if (instance == null) instance = new ScriptEnvironment();
+        return instance;
     }
 
     public void execResource(String resourceLocation) {
@@ -46,7 +51,19 @@ public class ScriptEnvironment {
     }
 
     public void execFile(File scriptFile) {
-        execString(Util.readFileToString(scriptFile));
+        if (!scriptFile.isFile()) return;
+
+        scriptExecutor.execute(() -> {
+            try (Scope scope = new Scope()) {
+                scope.eval(scriptFile);
+            } catch (Exception e) {
+                scriptExceptionHandler(e);
+            } finally {
+                ClientEntrypoint.setFakePlayerState(false);
+            }
+        });
+
+        if (!scriptExecutor.isAlive()) scriptExecutor.start();
     }
 
     private void execString(String code) {
@@ -57,14 +74,56 @@ public class ScriptEnvironment {
 
         scriptExecutor.execute(() -> {
             try (Scope scope = new Scope()) {
-                scope.eval(code);
+                scope.eval(code, "<eval>");
             } catch (Exception e) {
-                Log.error("Unhandled Exception: {}", e.getClass());
-                Log.catching(e);
+                scriptExceptionHandler(e);
+            } finally {
+                ClientEntrypoint.setFakePlayerState(false);
             }
         });
 
         if (!scriptExecutor.isAlive()) scriptExecutor.start();
+    }
+
+    private void scriptExceptionHandler(Exception e) {
+        if (e instanceof PolyglotException) {
+            PolyglotException polyException = (PolyglotException) e;
+            Log.error("Script Exception:");
+            Log.catching(e);
+
+            if (polyException.isGuestException()) {
+                try {
+                    Class<?> exceptionClass = Class.forName("com.oracle.truffle.polyglot.PolyglotExceptionImpl");
+
+                    Field implField = PolyglotException.class.getDeclaredField("impl");
+                    implField.setAccessible(true);
+                    Object impl = implField.get(e);
+
+                    Field guestExceptionField = exceptionClass.getDeclaredField("exception");
+                    guestExceptionField.setAccessible(true);
+                    Throwable guestException = (Throwable) guestExceptionField.get(impl);
+                    if (guestException instanceof JSException) {
+                        JSException jse = (JSException) guestException;
+                        SourceSection location = polyException.getSourceLocation();
+
+                        MutableText errorInfo = new LiteralText(jse.getErrorType().name())
+                                .append(" (").append(jse.getCause().getMessage()).append(")")
+                                .append(" caused by ").append(location.getSource().getName())
+                                .append(":").append(Integer.toString(location.getStartLine()))
+                                .append(" `").append(location.getCharacters().toString()).append("`")
+                                .formatted(Formatting.RED);
+                        ClientEntrypoint.sendClientMessage(errorInfo);
+                    }
+                } catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException ex) {
+                    Log.error("Exception in exception handler:");
+                    Log.catching(ex);
+                }
+            }
+        } else {
+            ClientEntrypoint.sendClientMessage(new LiteralText("Unhandled Exception: " + e.getClass()).formatted(Formatting.RED));
+            Log.error("Unhandled Exception: {}", e.getClass());
+            Log.catching(e);
+        }
     }
 
     private static class ScriptExecutor extends Thread implements Executor {
@@ -96,22 +155,28 @@ public class ScriptEnvironment {
     }
 
     private static class Scope implements Closeable {
+        private static final String LANGUAGE = "js";
         private final GraalJSScriptEngine engine;
 
         public Scope() {
             engine = GraalJSScriptEngine.create(null,
-                    Context.newBuilder("js")
+                    Context.newBuilder(LANGUAGE)
                     .allowHostAccess(HostAccess.ALL)
                     .allowHostClassLookup(s -> true)
                     .option("js.ecmascript-version", "2021")
             );
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("sys", new SysApi());
-            bindings.put("minecraft", new MinecraftApi());
+            bindings.put("Sys", new SysApi());
+            bindings.put("Data", new DataApi());
+            bindings.put("Minecraft", new MinecraftApi());
         }
 
-        public Object eval(String source) throws ScriptException {
-            return engine.eval(source, engine.getContext());
+        public Object eval(String source, String name) {
+            return engine.getPolyglotContext().eval(Source.newBuilder(LANGUAGE, source, name).buildLiteral());
+        }
+
+        public Object eval(File file) throws IOException {
+            return engine.getPolyglotContext().eval(Source.newBuilder(LANGUAGE, file).build());
         }
 
         @Override
@@ -127,6 +192,13 @@ public class ScriptEnvironment {
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
+        public static class DataApi {
+            public Object getProp(String key) {
+                return null;
+            }
+        }
+
+        @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class MinecraftApi {
             private static void waitWhile(BooleanSupplier condition) {
                 while (condition.getAsBoolean() && !Thread.currentThread().isInterrupted()) {
@@ -138,9 +210,8 @@ public class ScriptEnvironment {
                 ClientEntrypoint.sendClientMessage(message);
             }
 
-            public boolean aiEnabled() {
-                FakePlayer player = FakePlayer.get();
-                return !player.isAiDisabled();
+            public boolean isAiDisabled() {
+                return FakePlayer.get().isAiDisabled();
             }
 
             public void goToBlock(int x, int y, int z) {
@@ -166,7 +237,6 @@ public class ScriptEnvironment {
             }
 
             public boolean quickMoveStack(int slot) {
-                FakePlayer player = FakePlayer.get();
                 AbstractInventory container = ClientEntrypoint.getOpenContainer();
                 if (container == null) return false;
 
@@ -175,7 +245,6 @@ public class ScriptEnvironment {
             }
 
             public void closeContainer() {
-                FakePlayer player = FakePlayer.get();
                 AbstractInventory container = ClientEntrypoint.getOpenContainer();
                 if (container == null) return;
 
@@ -183,13 +252,11 @@ public class ScriptEnvironment {
             }
 
             public BlockPos getPos() {
-                FakePlayer player = FakePlayer.get();
-                return player.getBlockPos();
+                return FakePlayer.get().getBlockPos();
             }
 
             public BlockState getBlockStateAt(int x, int y, int z) {
-                FakePlayer player = FakePlayer.get();
-                return player.world.getBlockState(new BlockPos(x, y, z));
+                return FakePlayer.get().world.getBlockState(new BlockPos(x, y, z));
             }
         }
     }

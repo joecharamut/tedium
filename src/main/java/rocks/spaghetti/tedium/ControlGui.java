@@ -123,6 +123,7 @@ public class ControlGui extends LightweightGuiDescription {
             runButton.setOnClick(() -> {
                 Screen screen = MinecraftClient.getInstance().currentScreen;
                 if (screen != null) screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, -1, -1);
+                ClientEntrypoint.setFakePlayerState(true);
                 ScriptEnvironment.getInstance().execFile(selectedScript.file);
             });
             // todo: delete button doesnt do anything yet
