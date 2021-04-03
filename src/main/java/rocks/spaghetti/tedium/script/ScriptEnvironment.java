@@ -1,7 +1,6 @@
 package rocks.spaghetti.tedium.script;
 
 import com.oracle.truffle.js.runtime.JSException;
-import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -11,7 +10,6 @@ import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import org.graalvm.polyglot.*;
-import org.jetbrains.annotations.NotNull;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
 import rocks.spaghetti.tedium.Util;
@@ -19,16 +17,12 @@ import rocks.spaghetti.tedium.core.AbstractInventory;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 
-import javax.script.*;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 
 public class ScriptEnvironment {
@@ -46,142 +40,129 @@ public class ScriptEnvironment {
         return instance;
     }
 
-    public void execResource(String resourceLocation) {
-        execString(Util.getResourceAsString(resourceLocation));
-    }
-
     public void execFile(File scriptFile) {
         if (!scriptFile.isFile()) return;
-
-        scriptExecutor.execute(() -> {
-            try (Scope scope = new Scope()) {
-                scope.eval(scriptFile);
-            } catch (Exception e) {
-                scriptExceptionHandler(e);
-            } finally {
-                ClientEntrypoint.setFakePlayerState(false);
-            }
-        });
-
-        if (!scriptExecutor.isAlive()) scriptExecutor.start();
+        scriptExecutor.execute(Scope.toSource(scriptFile));
     }
 
     private void execString(String code) {
-        if (code.isEmpty()) {
-            Log.warn("Not running empty string!");
-            return;
-        }
-
-        scriptExecutor.execute(() -> {
-            try (Scope scope = new Scope()) {
-                scope.eval(code, "<eval>");
-            } catch (Exception e) {
-                scriptExceptionHandler(e);
-            } finally {
-                ClientEntrypoint.setFakePlayerState(false);
-            }
-        });
-
-        if (!scriptExecutor.isAlive()) scriptExecutor.start();
+        if (code.isEmpty()) return;
+        scriptExecutor.execute(Scope.toSource(code, "<eval>"));
     }
 
-    private void scriptExceptionHandler(Exception e) {
-        if (e instanceof PolyglotException) {
-            PolyglotException polyException = (PolyglotException) e;
-            Log.error("Script Exception:");
-            Log.catching(e);
+    private static class ScriptExecutor {
+        private Runnable currentScript = null;
 
-            if (polyException.isGuestException()) {
-                try {
-                    Class<?> exceptionClass = Class.forName("com.oracle.truffle.polyglot.PolyglotExceptionImpl");
+        public void execute(Source source) {
+            if (currentScript != null) {
+                Log.error("Already executing a script!");
+                return;
+            }
 
-                    Field implField = PolyglotException.class.getDeclaredField("impl");
-                    implField.setAccessible(true);
-                    Object impl = implField.get(e);
+            currentScript = () -> {
+                try (Scope scope = new Scope()) {
+                    scope.eval(source);
+                } catch (Exception e) {
+                    scriptExceptionHandler(e);
+                } finally {
+                    ClientEntrypoint.setFakePlayerState(false);
+                    currentScript = null;
+                }
+            };
 
-                    Field guestExceptionField = exceptionClass.getDeclaredField("exception");
-                    guestExceptionField.setAccessible(true);
-                    Throwable guestException = (Throwable) guestExceptionField.get(impl);
-                    if (guestException instanceof JSException) {
-                        JSException jse = (JSException) guestException;
-                        SourceSection location = polyException.getSourceLocation();
+            Thread scriptThread = new Thread(currentScript);
+            scriptThread.setName("Script Execution Thread");
+            scriptThread.start();
+        }
 
-                        MutableText errorInfo = new LiteralText(jse.getErrorType().name())
-                                .append(" (").append(jse.getCause().getMessage()).append(")")
-                                .append(" caused by ").append(location.getSource().getName())
-                                .append(":").append(Integer.toString(location.getStartLine()))
-                                .append(" `").append(location.getCharacters().toString()).append("`")
-                                .formatted(Formatting.RED);
-                        ClientEntrypoint.sendClientMessage(errorInfo);
+        private static void scriptExceptionHandler(Exception e) {
+            if (e instanceof PolyglotException) {
+                PolyglotException polyException = (PolyglotException) e;
+                Log.error("Script Exception:");
+                Log.catching(e);
+
+                if (polyException.isGuestException()) {
+                    try {
+                        Class<?> exceptionClass = Class.forName("com.oracle.truffle.polyglot.PolyglotExceptionImpl");
+
+                        Field implField = PolyglotException.class.getDeclaredField("impl");
+                        implField.setAccessible(true);
+                        Object impl = implField.get(e);
+
+                        Field guestExceptionField = exceptionClass.getDeclaredField("exception");
+                        guestExceptionField.setAccessible(true);
+                        Throwable guestException = (Throwable) guestExceptionField.get(impl);
+                        if (guestException instanceof JSException) {
+                            JSException jse = (JSException) guestException;
+                            SourceSection location = polyException.getSourceLocation();
+
+                            MutableText errorInfo = new LiteralText(jse.getErrorType().name());
+
+                            if (jse.getCause() != null) {
+                                errorInfo.append(" (").append(jse.getCause().getMessage()).append(")");
+                            } else {
+                                errorInfo.append(" (").append(jse.getRawMessage()).append(")");
+                            }
+
+                            errorInfo
+                                    .append(" caused by ").append(location.getSource().getName())
+                                    .append(" line ").append(Integer.toString(location.getStartLine()))
+                                    .append(": `").append(location.getCharacters().toString()).append("`")
+                                    .formatted(Formatting.RED);
+                            ClientEntrypoint.sendClientMessage(errorInfo);
+                        }
+                    } catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException ex) {
+                        Log.error("Exception in exception handler:");
+                        Log.catching(ex);
                     }
-                } catch (NoSuchFieldException | IllegalAccessException | ClassNotFoundException ex) {
-                    Log.error("Exception in exception handler:");
-                    Log.catching(ex);
                 }
-            }
-        } else {
-            ClientEntrypoint.sendClientMessage(new LiteralText("Unhandled Exception: " + e.getClass()).formatted(Formatting.RED));
-            Log.error("Unhandled Exception: {}", e.getClass());
-            Log.catching(e);
-        }
-    }
-
-    private static class ScriptExecutor extends Thread implements Executor {
-        private final Queue<Runnable> runQueue = new ArrayDeque<>();
-
-        public ScriptExecutor() {
-            setName("Script Execution Thread");
-        }
-
-        @Override
-        public void execute(@NotNull Runnable runnable) {
-            runQueue.add(runnable);
-        }
-
-        @Override
-        public void run() {
-            while (!isInterrupted()) {
-                if (!runQueue.isEmpty()) {
-                    runQueue.poll().run();
-                }
-
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    this.interrupt();
-                }
+            } else {
+                ClientEntrypoint.sendClientMessage(new LiteralText("Unhandled Exception: " + e.getClass()).formatted(Formatting.RED));
+                Log.error("Unhandled Exception:");
+                Log.catching(e);
             }
         }
     }
 
     private static class Scope implements Closeable {
         private static final String LANGUAGE = "js";
-        private final GraalJSScriptEngine engine;
+        private final Context context;
 
         public Scope() {
-            engine = GraalJSScriptEngine.create(null,
-                    Context.newBuilder(LANGUAGE)
+            context = Context.newBuilder(LANGUAGE)
                     .allowHostAccess(HostAccess.ALL)
-                    .allowHostClassLookup(s -> true)
+                    .allowHostClassLookup(className -> true)
                     .option("js.ecmascript-version", "2021")
-            );
-            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-            bindings.put("Sys", new SysApi());
-            bindings.put("Data", new DataApi());
-            bindings.put("Minecraft", new MinecraftApi());
+                    .build();
+            Value bindings = context.getBindings(LANGUAGE);
+            bindings.putMember("Sys", new SysApi());
+            bindings.putMember("Data", new DataApi());
+            bindings.putMember("Minecraft", new MinecraftApi());
         }
 
-        public Object eval(String source, String name) {
-            return engine.getPolyglotContext().eval(Source.newBuilder(LANGUAGE, source, name).buildLiteral());
+        public static Source toSource(String code, String name) {
+            try {
+                return Source.newBuilder(LANGUAGE, code, name).build();
+            } catch (IOException e) {
+                return null;
+            }
         }
 
-        public Object eval(File file) throws IOException {
-            return engine.getPolyglotContext().eval(Source.newBuilder(LANGUAGE, file).build());
+        public static Source toSource(File file) {
+            try {
+                return Source.newBuilder(LANGUAGE, file).build();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+
+        public Value eval(Source source) {
+            return context.eval(source);
         }
 
         @Override
         public void close() {
-            engine.close();
+            context.close();
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})

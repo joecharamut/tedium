@@ -62,8 +62,8 @@ public class ControlGui extends LightweightGuiDescription {
         }
         setRootPanel(root);
 
-        addTab(createMainPanel(), new ItemIcon(Items.NETHER_STAR), new TranslatableText("gui.tedium.tabMain"));
-        addTab(createLocationPanel(), new ItemIcon(Items.TARGET), new TranslatableText("gui.tedium.tabLocations"));
+        addTab(new MainPanel(), new ItemIcon(Items.NETHER_STAR), new TranslatableText("gui.tedium.tabMain"));
+        addTab(new LocationPanel(), new ItemIcon(Items.COMPASS), new TranslatableText("gui.tedium.tabLocations"));
         addTab(new ScriptPanel(), new ItemIcon(Items.COMMAND_BLOCK), new TranslatableText("gui.tedium.tabScripts"));
 
         root.validate(this);
@@ -86,29 +86,25 @@ public class ControlGui extends LightweightGuiDescription {
         });
     }
 
-    private WPanel createMainPanel() {
-        WGridPanel panel = new WGridPanel();
-
-        panel.add(new WText(new TranslatableText("gui.tedium.tabMain")), 0, 0, GRID_WIDTH, 1);
-
-        WButton button = new WButton(new TranslatableText("gui.tedium.button"));
-        panel.add(button, 0, 1, 4, 1);
-
-        return panel;
-    }
-
-    private WPanel createLocationPanel() {
-        WGridPanel panel = new WGridPanel();
-
-        panel.add(new WText(new TranslatableText("gui.tedium.tabLocations")), 0, 0, GRID_WIDTH, 1);
-
-        return panel;
-    }
-
     @Override
     public void addPainters() {
         super.addPainters();
         this.rootPanel.setBackgroundPainter(null);
+    }
+
+    private static class MainPanel extends WGridPanel {
+        public MainPanel() {
+            add(new WText(new TranslatableText("gui.tedium.tabMain")), 0, 0, GRID_WIDTH, 1);
+
+            WButton button = new WButton(new TranslatableText("gui.tedium.button"));
+            add(button, 0, 1, 4, 1);
+        }
+    }
+
+    private static class LocationPanel extends WGridPanel {
+        public LocationPanel() {
+            add(new WText(new TranslatableText("gui.tedium.tabLocations")), 0, 0, GRID_WIDTH, 1);
+        }
     }
 
     private static class ScriptPanel extends WPlainPanel {

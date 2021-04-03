@@ -2,7 +2,6 @@
 "use strict";
 
 (function() {
-    Minecraft.asdasd();
     Minecraft.sendMessage("Hello from Script World");
     if (Minecraft.isAiDisabled()) {
         Minecraft.sendMessage("AI not enabled, exiting");

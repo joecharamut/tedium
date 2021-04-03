@@ -28,7 +28,6 @@ import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.hud.DebugHud;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
-import rocks.spaghetti.tedium.script.ScriptEnvironment;
 import rocks.spaghetti.tedium.web.WebServer;
 
 import java.io.IOException;
@@ -46,7 +45,6 @@ import static net.minecraft.util.Util.NIL_UUID;
 
 public class ClientEntrypoint implements ClientModInitializer {
     private static final ExecutorQueue runInClientThread = new ExecutorQueue();
-    private static boolean fakePlayerState = false;
     private static boolean disableInput = false;
     private static boolean debugEnabled = false;
     private static AbstractInventory currentContainer = null;
@@ -69,15 +67,8 @@ public class ClientEntrypoint implements ClientModInitializer {
             Constants.CATEGORY_KEYS
     ));
 
-    private static final KeyBinding testKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.test",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_K,
-            Constants.CATEGORY_KEYS
-    ));
-
     public static final KeyBinding[] modKeybindings = {
-            toggleAiKey, toggleDebugKey, testKey
+            toggleAiKey, toggleDebugKey
     };
 
     private static class ExecutorQueue implements Executor {
@@ -133,8 +124,6 @@ public class ClientEntrypoint implements ClientModInitializer {
     }
 
     public static void setFakePlayerState(boolean enabled) {
-        fakePlayerState = enabled;
-
         FakePlayer fake = FakePlayer.get();
         MinecraftClient client = MinecraftClient.getInstance();
 
@@ -232,10 +221,6 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         while (toggleDebugKey.wasPressed()) {
             debugEnabled = !debugEnabled;
-        }
-
-        while (testKey.wasPressed()) {
-            ScriptEnvironment.getInstance().execResource("script/indexChests.js");
         }
 
         runInClientThread.runNext();
