@@ -28,7 +28,7 @@ public class RenderHelper {
         listeners.add(listener);
     }
 
-    public static void renderEventHandler(WorldRenderContext context) {
+    public static void beforeDebugRenderer(WorldRenderContext context) {
         for (RenderListener listener : listeners) {
             listener.onRender();
         }
@@ -54,7 +54,8 @@ public class RenderHelper {
         void onRender();
     }
 
-    private interface Renderable {
+    @FunctionalInterface
+    public interface Renderable {
         void render(WorldRenderContext context);
     }
 
