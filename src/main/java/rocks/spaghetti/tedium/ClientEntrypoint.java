@@ -28,6 +28,7 @@ import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
+import rocks.spaghetti.tedium.render.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
 import rocks.spaghetti.tedium.web.WebServer;
@@ -56,8 +57,8 @@ public class ClientEntrypoint implements ClientModInitializer {
     private final DebugHud debugHud = new DebugHud();
     private boolean connected = false;
 
-    private static final KeyBinding toggleAiKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.toggleAi",
+    private static final KeyBinding openMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.tedium.openMenu",
             InputUtil.Type.KEYSYM,
             GLFW.GLFW_KEY_F9,
             Constants.CATEGORY_KEYS
@@ -71,7 +72,7 @@ public class ClientEntrypoint implements ClientModInitializer {
     ));
 
     public static final KeyBinding[] modKeybindings = {
-            toggleAiKey, toggleDebugKey
+            openMenuKey, toggleDebugKey
     };
 
     private static class ExecutorQueue implements Executor {
@@ -211,7 +212,7 @@ public class ClientEntrypoint implements ClientModInitializer {
             }
         });
     }
-    
+
     private void onSaveConfig(ModConfig config) {
         if (ModConfig.isFullbrightEnabled()) {
             Option.GAMMA.setMax(100.0f);
@@ -237,7 +238,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         InteractionManager.tick();
 
-        while (toggleAiKey.wasPressed()) {
+        while (openMenuKey.wasPressed()) {
             setFakePlayerState(false);
             client.openScreen(ControlGui.createScreen());
         }

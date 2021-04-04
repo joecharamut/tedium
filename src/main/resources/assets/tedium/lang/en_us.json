@@ -1,5 +1,6 @@
 {
-  "key.tedium.toggleAi": "Toggle Mode",
+  "key.tedium.openMenu": "Open Menu",
+  "key.tedium.toggleDebug": "Toggle Debug",
 
   "category.tedium.keys": "Tedium Controls",
 

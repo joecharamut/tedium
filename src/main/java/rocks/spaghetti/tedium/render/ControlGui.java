@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.render;
 
 import io.github.cottonmc.cotton.gui.client.BackgroundPainter;
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
@@ -20,6 +20,7 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import org.lwjgl.glfw.GLFW;
+import rocks.spaghetti.tedium.*;
 import rocks.spaghetti.tedium.script.ScriptEnvironment;
 
 import java.io.File;
