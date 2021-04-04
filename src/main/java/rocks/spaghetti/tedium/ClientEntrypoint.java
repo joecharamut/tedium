@@ -5,22 +5,21 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
-import net.minecraft.client.render.Camera;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotUtils;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.*;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
@@ -28,10 +27,12 @@ import rocks.spaghetti.tedium.core.AbstractInventory;
 import rocks.spaghetti.tedium.core.FakePlayer;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
-import rocks.spaghetti.tedium.hud.DebugHud;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
+import rocks.spaghetti.tedium.render.DebugHud;
+import rocks.spaghetti.tedium.render.RenderHelper;
 import rocks.spaghetti.tedium.web.WebServer;
 
+import java.awt.*;
 import java.io.IOException;
 import java.net.BindException;
 import java.util.ArrayDeque;
@@ -188,48 +189,29 @@ public class ClientEntrypoint implements ClientModInitializer {
             }
         });
 
+        WorldRenderEvents.START.register(RenderHelper::start);
+        WorldRenderEvents.AFTER_ENTITIES.register(RenderHelper::afterEntities);
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::beforeDebugRenderer);
-    }
+        RenderHelper.addListener(() -> {
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(207, 65, -120), Color.GREEN.getRGB()));
 
-    public static void onRender(WorldRenderContext context) {
-        int x1 = 211;
-        int x2 = 211;
-        int y1 = 66;
-        int y2 = 70;
-        int z1 = -125;
-        int z2 = -119;
+            int x1 = 211;
+            int x2 = 211;
+            int y1 = 66;
+            int y2 = 70;
+            int z1 = -125;
+            int z2 = -119;
 
-        for (int a = x1; a <= x2; a++) {
-            for (int b = y1; b <= y2; b++) {
-                for (int c = z1; c <= z2; c++) {
-                    ClientEntrypoint.renderTextLabel(context, new LiteralText("☺"), a, b, c);
+            for (int a = x1; a <= x2; a++) {
+                for (int b = y1; b <= y2; b++) {
+                    for (int c = z1; c <= z2; c++) {
+                        RenderHelper.queueRenderable(new RenderHelper.FloatingText(new LiteralText("☺"), new BlockPos(a, b, c)));
+                    }
                 }
             }
-        }
+        });
     }
-
-    public static void renderTextLabel(WorldRenderContext context, Text text, double x, double y, double z) {
-        MatrixStack matrices = context.matrixStack();
-        Camera camera = context.camera();
-        matrices.push();
-
-        Vec3d cameraPos = camera.getPos();
-        // to origin
-        matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
-        // to block pos
-        matrices.translate(x, y, z);
-        // center in block
-        matrices.translate(0.5, 0.5, 0.5);
-
-        matrices.multiply(camera.getRotation());
-        matrices.scale(-0.025F, -0.025F, 0.025F);
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-        float halfWidth = -textRenderer.getWidth(text) / 2.0F;
-
-        textRenderer.draw(text, halfWidth, 0, 0xffffffff, false, matrices.peek().getModel(), context.consumers(), false, 0x3f000000, 0xf00010);
-        matrices.pop();
-    }
-
+    
     private void onSaveConfig(ModConfig config) {
         if (ModConfig.isFullbrightEnabled()) {
             Option.GAMMA.setMax(100.0f);

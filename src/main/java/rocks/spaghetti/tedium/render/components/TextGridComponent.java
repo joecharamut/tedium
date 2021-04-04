@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.hud.components;
+package rocks.spaghetti.tedium.render.components;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;

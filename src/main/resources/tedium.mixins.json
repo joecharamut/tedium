@@ -14,8 +14,7 @@
     "IngredientMixin",
     "IngredientTagEntryMixin",
     "ContainerMixin",
-    "ClientPlayNetworkHandlerMixin",
-    "WorldRendererMixin"
+    "ClientPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

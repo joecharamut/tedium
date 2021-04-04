@@ -1,12 +1,11 @@
-package rocks.spaghetti.tedium.hud;
+package rocks.spaghetti.tedium.render;
 
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ai.goal.PrioritizedGoal;
 import net.minecraft.util.Formatting;
-import rocks.spaghetti.tedium.Util;
 import rocks.spaghetti.tedium.core.FakePlayer;
-import rocks.spaghetti.tedium.hud.components.HudComponent;
-import rocks.spaghetti.tedium.hud.components.TextGridComponent;
+import rocks.spaghetti.tedium.render.components.HudComponent;
+import rocks.spaghetti.tedium.render.components.TextGridComponent;
 
 import java.util.ArrayList;
 

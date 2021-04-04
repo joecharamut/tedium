@@ -20,7 +20,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
-import rocks.spaghetti.tedium.RenderHelper;
+import rocks.spaghetti.tedium.render.RenderHelper;
 import rocks.spaghetti.tedium.core.ai.*;
 import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
 
