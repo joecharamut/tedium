@@ -31,14 +31,11 @@ import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.render.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
+import rocks.spaghetti.tedium.web.WebHandlers;
 import rocks.spaghetti.tedium.web.WebServer;
 
-import java.awt.*;
-import java.io.IOException;
 import java.net.BindException;
 import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -194,7 +191,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         WorldRenderEvents.AFTER_ENTITIES.register(RenderHelper::afterEntities);
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::beforeDebugRenderer);
         RenderHelper.addListener(() -> {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(207, 65, -120), Color.GREEN.getRGB()));
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(207, 65, -120), 0x00ff00));
 
             int x1 = 211;
             int x2 = 211;
@@ -216,6 +213,8 @@ public class ClientEntrypoint implements ClientModInitializer {
     private void onSaveConfig(ModConfig config) {
         if (ModConfig.isFullbrightEnabled()) {
             Option.GAMMA.setMax(100.0f);
+        } else {
+            Option.GAMMA.setMax(1.0f);
         }
     }
 
@@ -262,7 +261,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         if (ModConfig.isWebServerEnabled() && !webServer.isRunning()) {
             try {
                 webServer.startServer();
-                registerWebContexts();
+                new WebHandlers().registerWebContexts(webServer);
                 String webAddress = "http://localhost:" + ModConfig.getWebServerPort();
                 sendClientMessage(new TranslatableText("text.tedium.webServerStarted")
                         .formatted(Formatting.WHITE)
@@ -281,37 +280,5 @@ public class ClientEntrypoint implements ClientModInitializer {
         if (webServer.isRunning()) {
             webServer.stopServer();
         }
-    }
-
-    private void registerWebContexts() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        assert client.player != null;
-        assert client.world != null;
-
-        webServer.registerPath("/screenshot", session -> {
-            byte[] imageBytes = { };
-            try {
-                imageBytes = takeScreenshotBlocking().getBytes();
-            } catch (IOException e) { Log.catching(e); }
-
-            return WebServer.bytesResponse(imageBytes, "image/png");
-        });
-
-
-        webServer.registerPath("/name", (WebServer.StringRequestHandler) () -> client.player.getDisplayName().asString());
-        webServer.registerPath("/position", (WebServer.StringRequestHandler) () -> client.player.getPos().toString());
-        webServer.registerPath("/under", (WebServer.StringRequestHandler) () -> client.world.getBlockState(client.player.getBlockPos().down()).toString());
-
-        webServer.registerPath("/look", session -> {
-            Map<String, List<String>> query = session.getParameters();
-
-            float yaw = 0;
-            if (query.containsKey("yaw")) {
-                yaw = Float.parseFloat(query.get("yaw").get(0));
-            }
-
-            client.player.yaw = yaw;
-            return WebServer.stringResponse("OK");
-        });
     }
 }

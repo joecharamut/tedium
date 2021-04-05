@@ -176,7 +176,11 @@ public class ScriptEnvironment {
 
         private static void waitWhile(BooleanSupplier condition) {
             while (condition.getAsBoolean() && !Thread.currentThread().isInterrupted()) {
-                Util.sleep(100);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
 
@@ -189,9 +193,7 @@ public class ScriptEnvironment {
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class DataApi {
-            public Object getProp(String key) {
-                return null;
-            }
+
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})

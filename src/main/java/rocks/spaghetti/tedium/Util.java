@@ -13,14 +13,6 @@ public class Util {
         net.minecraft.util.Util.getOperatingSystem().open(file);
     }
 
-    public static void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     public static String readFileToString(File theFile) {
         try {
             InputStream is = new FileInputStream(theFile);
