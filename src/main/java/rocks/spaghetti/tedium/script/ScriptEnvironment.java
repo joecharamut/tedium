@@ -9,6 +9,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import org.graalvm.polyglot.*;
 import org.jetbrains.annotations.Nullable;
 import rocks.spaghetti.tedium.ClientEntrypoint;
@@ -23,8 +24,11 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 public class ScriptEnvironment {
     private static ScriptEnvironment instance = null;
@@ -198,8 +202,9 @@ public class ScriptEnvironment {
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class MinecraftApi {
-            public void sendMessage(String message) {
-                ClientEntrypoint.sendClientMessage(message);
+            public void sendMessage(Object obj) {
+                if (obj == null) obj = "null";
+                ClientEntrypoint.sendClientMessage(obj.toString());
             }
 
             public boolean isAiDisabled() {
