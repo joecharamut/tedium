@@ -3,17 +3,14 @@ package rocks.spaghetti.tedium.render;
 import io.github.cottonmc.cotton.gui.client.BackgroundPainter;
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import io.github.cottonmc.cotton.gui.client.LightweightGuiDescription;
-import io.github.cottonmc.cotton.gui.client.ScreenDrawing;
 import io.github.cottonmc.cotton.gui.widget.*;
-import io.github.cottonmc.cotton.gui.widget.data.HorizontalAlignment;
-import io.github.cottonmc.cotton.gui.widget.icon.*;
+import io.github.cottonmc.cotton.gui.widget.icon.Icon;
+import io.github.cottonmc.cotton.gui.widget.icon.ItemIcon;
+import io.github.cottonmc.cotton.gui.widget.icon.TextureIcon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -21,6 +18,8 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.*;
+import rocks.spaghetti.tedium.render.gui.ToggleButton;
+import rocks.spaghetti.tedium.render.gui.TooltipButton;
 import rocks.spaghetti.tedium.script.ScriptEnvironment;
 
 import java.io.File;
@@ -110,48 +109,44 @@ public class ControlGui extends LightweightGuiDescription {
 
     private static class ScriptPanel extends WPlainPanel {
         private final List<ToggleButton> scriptButtons = new ArrayList<>();
-        private final WButton runButton = new WButton(new TextureIcon(new Identifier("tedium:textures/gui/play.png"))).setEnabled(false);
-        private final WButton deleteButton = new WButton(new TextureIcon(new Identifier("tedium:textures/gui/trash.png"))).setEnabled(false);
         private ScriptFile selectedScript = null;
 
         public ScriptPanel() {
             add(new WText(new TranslatableText("gui.tedium.tabScripts")), 0, 0, WIDTH, GRID);
-            add(runButton, 0, GRID, 20, 20);
-            runButton.setOnClick(() -> {
+
+            WButton runButton = new TooltipButton()
+                    .setTooltip(new TranslatableText("gui.tedium.buttonRun"))
+                    .setIcon(new TextureIcon(new Identifier("tedium:textures/gui/play.png")))
+                    .setEnabled(false)
+                    .setOnClick(() -> {
                 Screen screen = MinecraftClient.getInstance().currentScreen;
                 if (screen != null) screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, -1, -1);
                 ClientEntrypoint.setFakePlayerState(true);
                 ScriptEnvironment.getInstance().execFile(selectedScript.file);
             });
-            // todo: delete button doesnt do anything yet
-            // todo: refresh folder
-            add(deleteButton, 0, 2*GRID+4, 20, 20);
-            add(new WButton(new LiteralText("...")).setOnClick(() -> Util.openFile(ModData.getGlobalDir())), 0, HEIGHT, 20, 20);
+            add(runButton, 0, GRID, 20, 20);
+
+            WButton folderButton = new TooltipButton()
+                    .setTooltip(new TranslatableText("gui.tedium.buttonOpenFolder"))
+                    .setIcon(new TextureIcon(new Identifier(Constants.MOD_ID, "textures/gui/folder.png")))
+                    .setOnClick(() -> Util.openFile(ModData.getGlobalDir()));
+            add(folderButton, 0, HEIGHT, 20, 20);
 
             List<ScriptFile> listData = Arrays.stream(ModData.getGlobalFiles()).map(ScriptFile::new).collect(Collectors.toList());
-            WListPanel<ScriptFile, ToggleButton> scriptList = new WListPanel<ScriptFile, ToggleButton>(listData, ToggleButton::new, (file, item) -> {
+            scriptButtons.clear();
+            WListPanel<ScriptFile, ToggleButton> scriptList = new WListPanel<>(listData, ToggleButton::new, (file, item) -> {
                 item.setLabel(new LiteralText(file.name));
                 item.setIcon(new ItemIcon(file.icon));
-            }) {
-                @Override
-                public void layout() {
-                    super.layout();
-                    scriptButtons.clear();
-                    configured.forEach((file, button) -> {
-                        button.setOnClick(() -> onButtonClick(button, file));
-                        scriptButtons.add(button);
-                    });
-                }
-            };
+                item.setOnClick(() -> {
+                    runButton.setEnabled(true);
+                    selectedScript = file;
+                    scriptButtons.forEach(button -> button.setToggled(false));
+                    item.setToggled(true);
+                });
+                scriptButtons.add(item);
+            });
             scriptList.setBackgroundPainter(BackgroundPainter.SLOT);
             add(scriptList, (int) (1.5 * GRID), GRID + 1, (GRID_WIDTH - 1) * GRID, HEIGHT);
-        }
-
-        private void onButtonClick(ToggleButton clicked, ScriptFile file) {
-            runButton.setEnabled(true);
-            deleteButton.setEnabled(true);
-            selectedScript = file;
-            scriptButtons.forEach(button -> button.toggled = (button == clicked));
         }
 
         private static class ScriptFile {
@@ -177,81 +172,6 @@ public class ControlGui extends LightweightGuiDescription {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private static class ToggleButton extends WButton {
-        private static final Identifier NORMAL_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button.png");
-        private static final Identifier DISABLED_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button_disabled.png");
-        private static final Identifier HOVERED_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button_hover.png");
-        private static final Identifier SELECTED_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button_select.png");
-        private static final Identifier HOVERED_SELECTED_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button_hover_select.png");
-
-        private boolean toggled = false;
-
-        @Override
-        public void onClick(int x, int y, int button) {
-            if (button == 0 && isEnabled() && isWithinBounds(x, y)) {
-                toggled = !toggled;
-                MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-
-                if (getOnClick() != null) getOnClick().run();
-            }
-        }
-
-        @Override
-        public void paint(MatrixStack matrices, int x, int y, int mouseX, int mouseY) {
-            boolean hovered = (mouseX >= 0 && mouseY >= 0 && mouseX < getWidth() && mouseY < getHeight());
-
-            Identifier buttonImage = NORMAL_BUTTON;
-            if (!isEnabled()) {
-                buttonImage = DISABLED_BUTTON;
-            } else if (hovered || isFocused()) {
-                if (toggled) {
-                    buttonImage = HOVERED_SELECTED_BUTTON;
-                } else {
-                    buttonImage = HOVERED_BUTTON;
-                }
-            } else if (toggled) {
-                buttonImage = SELECTED_BUTTON;
-            }
-
-            float px = 1 / 200f;
-            float py = 1 / 20f;
-            int halfWidth = getWidth() / 2;
-            if (halfWidth > 198) halfWidth = 198;
-
-            ScreenDrawing.texturedRect(
-                    x, y,
-                    getWidth() / 2, 20,
-                    buttonImage,
-                    0, 0,
-                    halfWidth * px, 20 * py,
-                    0xFFFFFFFF);
-
-            ScreenDrawing.texturedRect(
-                    x + (getWidth() / 2), y,
-                    getWidth() / 2, 20,
-                    buttonImage,
-                    (200 - (getWidth() / 2F)) * px, 0,
-                    200 * px, 20 * py,
-                    0xFFFFFFFF);
-
-            if (getIcon() != null) {
-                getIcon().paint(matrices, x + 2, y + 2, 16);
-            }
-
-            if (getLabel() != null) {
-                int color = 0xE0E0E0;
-                if (!isEnabled()) {
-                    color = 0xA0A0A0;
-                } else if (toggled) {
-                    color = 0xFFFFA0;
-                }
-
-                int xOffset = (getIcon() != null && alignment == HorizontalAlignment.LEFT) ? 18 : 0;
-                ScreenDrawing.drawStringWithShadow(matrices, getLabel().asOrderedText(), alignment, x + xOffset, y + ((20 - 8) / 2), width, color);
             }
         }
     }

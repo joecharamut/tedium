@@ -1,6 +1,5 @@
-package rocks.spaghetti.tedium.render.components;
+package rocks.spaghetti.tedium.render.hud;
 
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Formatting;
@@ -12,10 +11,6 @@ public class TextGridComponent implements HudComponent {
     private final List<TextComponent> upperLeftTexts = new LinkedList<>();
     private int upperLeftX = 2;
     private int upperLeftY = 2;
-
-    private final List<TextComponent> upperRightTexts = new LinkedList<>();
-    private int upperRightX = 2;
-    private int upperRightY = 2;
 
     public void upperLeft(String message, Formatting formatting, boolean shadow) {
         upperLeftTexts.add(new TextComponent(message, upperLeftX, upperLeftY).setFormatting(formatting).setShadow(shadow));
@@ -39,19 +34,6 @@ public class TextGridComponent implements HudComponent {
             int height = TextComponent.getLineHeight();
             int width = text.width();
             int boxX = 2;
-            int boxY = 2 + height * i;
-
-            DrawableHelper.fill(matrixStack, boxX - 1, boxY - 1, boxX + width + 1, boxY + height - 1, 0x90505050);
-            text.render(matrixStack, tickDelta);
-        }
-
-        for (int i = 0; i < upperRightTexts.size(); i++) {
-            TextComponent text = upperLeftTexts.get(i);
-            if (text.width() == 0) continue;
-
-            int height = TextComponent.getLineHeight();
-            int width = text.width();
-            int boxX = MinecraftClient.getInstance().getWindow().getScaledWidth() - width - 2;
             int boxY = 2 + height * i;
 
             DrawableHelper.fill(matrixStack, boxX - 1, boxY - 1, boxX + width + 1, boxY + height - 1, 0x90505050);

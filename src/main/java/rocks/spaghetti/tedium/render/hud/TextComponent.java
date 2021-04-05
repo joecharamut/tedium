@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.render.components;
+package rocks.spaghetti.tedium.render.hud;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;

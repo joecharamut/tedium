@@ -8,6 +8,7 @@
   "text.autoconfig.tedium.option.webServerEnabled": "Enable Local Web Server",
   "text.autoconfig.tedium.option.webServerPort": "Local Web Server Port",
   "text.autoconfig.tedium.option.enableFullbright": "Enable Increased Gamma",
+
   "text.tedium.webServerStarted": "Local Web Server Started at ",
   "text.tedium.webErrorStarting": "Error starting Local Web Server",
   "text.tedium.aiEnabled": "AI Control enabled",
@@ -15,5 +16,7 @@
 
   "gui.tedium.tabMain": "Main",
   "gui.tedium.tabLocations": "Saved Locations",
-  "gui.tedium.tabScripts": "Scripts"
+  "gui.tedium.tabScripts": "Scripts",
+  "gui.tedium.buttonRun": "Run Script",
+  "gui.tedium.buttonOpenFolder": "Open Folder"
 }

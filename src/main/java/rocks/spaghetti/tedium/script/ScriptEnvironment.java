@@ -10,6 +10,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import org.graalvm.polyglot.*;
+import org.jetbrains.annotations.Nullable;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
 import rocks.spaghetti.tedium.Util;
@@ -40,6 +41,11 @@ public class ScriptEnvironment {
         return instance;
     }
 
+    @Nullable
+    public Source getRunningSource() {
+        return scriptExecutor.currentSource;
+    }
+
     public void execFile(File scriptFile) {
         if (!scriptFile.isFile()) return;
         scriptExecutor.execute(Scope.toSource(scriptFile));
@@ -52,6 +58,7 @@ public class ScriptEnvironment {
 
     private static class ScriptExecutor {
         private Runnable currentScript = null;
+        private Source currentSource = null;
 
         public void execute(Source source) {
             if (currentScript != null) {
@@ -59,6 +66,7 @@ public class ScriptEnvironment {
                 return;
             }
 
+            currentSource = source;
             currentScript = () -> {
                 try (Scope scope = new Scope()) {
                     scope.eval(source);
@@ -67,6 +75,7 @@ public class ScriptEnvironment {
                 } finally {
                     ClientEntrypoint.setFakePlayerState(false);
                     currentScript = null;
+                    currentSource = null;
                 }
             };
 
@@ -165,6 +174,12 @@ public class ScriptEnvironment {
             context.close();
         }
 
+        private static void waitWhile(BooleanSupplier condition) {
+            while (condition.getAsBoolean() && !Thread.currentThread().isInterrupted()) {
+                Util.sleep(100);
+            }
+        }
+
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class SysApi {
             public void log(Object msg) {
@@ -181,12 +196,6 @@ public class ScriptEnvironment {
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
         public static class MinecraftApi {
-            private static void waitWhile(BooleanSupplier condition) {
-                while (condition.getAsBoolean() && !Thread.currentThread().isInterrupted()) {
-                    Util.sleep(100);
-                }
-            }
-
             public void sendMessage(String message) {
                 ClientEntrypoint.sendClientMessage(message);
             }
