@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.core.ai;
+package rocks.spaghetti.tedium.ai;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.MinecraftClient;

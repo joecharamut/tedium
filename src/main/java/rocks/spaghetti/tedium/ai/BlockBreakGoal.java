@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.core.ai;
+package rocks.spaghetti.tedium.ai;
 
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.util.math.BlockPos;

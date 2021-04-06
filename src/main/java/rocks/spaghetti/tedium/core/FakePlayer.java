@@ -22,7 +22,7 @@ import net.minecraft.util.math.Vec3d;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.render.RenderHelper;
-import rocks.spaghetti.tedium.core.ai.*;
+import rocks.spaghetti.tedium.ai.*;
 import rocks.spaghetti.tedium.mixin.GoalSelectorMixin;
 
 import java.awt.*;
