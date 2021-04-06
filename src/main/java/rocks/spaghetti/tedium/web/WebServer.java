@@ -1,8 +1,8 @@
 package rocks.spaghetti.tedium.web;
 
 import fi.iki.elonen.NanoHTTPD;
-import rocks.spaghetti.tedium.Log;
-import rocks.spaghetti.tedium.Util;
+import rocks.spaghetti.tedium.util.Log;
+import rocks.spaghetti.tedium.util.Util;
 import rocks.spaghetti.tedium.config.ModConfig;
 
 import java.io.ByteArrayInputStream;

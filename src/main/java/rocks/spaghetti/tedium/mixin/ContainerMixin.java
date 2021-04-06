@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import rocks.spaghetti.tedium.ClientEntrypoint;
-import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.core.AbstractInventory;
 
 import java.util.List;

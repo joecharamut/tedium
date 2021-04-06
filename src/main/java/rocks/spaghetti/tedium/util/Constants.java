@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.util;
 
 public class Constants {
     private Constants() { throw new IllegalStateException("Utility Class"); }

@@ -2,7 +2,7 @@ package rocks.spaghetti.tedium.web;
 
 import net.minecraft.client.MinecraftClient;
 import rocks.spaghetti.tedium.ClientEntrypoint;
-import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.util.Log;
 
 import java.io.IOException;
 import java.util.List;

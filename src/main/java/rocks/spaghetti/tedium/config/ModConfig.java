@@ -7,8 +7,8 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.minecraft.util.ActionResult;
-import rocks.spaghetti.tedium.Constants;
-import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.util.Constants;
+import rocks.spaghetti.tedium.util.Log;
 
 import java.util.function.Consumer;
 

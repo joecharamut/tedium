@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.util;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;

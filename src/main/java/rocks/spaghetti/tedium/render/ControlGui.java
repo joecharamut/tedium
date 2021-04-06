@@ -21,6 +21,10 @@ import rocks.spaghetti.tedium.*;
 import rocks.spaghetti.tedium.render.gui.ToggleButton;
 import rocks.spaghetti.tedium.render.gui.TooltipButton;
 import rocks.spaghetti.tedium.script.ScriptEnvironment;
+import rocks.spaghetti.tedium.util.Constants;
+import rocks.spaghetti.tedium.util.Log;
+import rocks.spaghetti.tedium.util.ModData;
+import rocks.spaghetti.tedium.util.Util;
 
 import java.io.File;
 import java.lang.reflect.Field;

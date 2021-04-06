@@ -8,7 +8,7 @@ import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
-import rocks.spaghetti.tedium.Constants;
+import rocks.spaghetti.tedium.util.Constants;
 
 public class ToggleButton extends WButton {
     private static final Identifier NORMAL_BUTTON = new Identifier(Constants.MOD_ID, "textures/gui/button.png");

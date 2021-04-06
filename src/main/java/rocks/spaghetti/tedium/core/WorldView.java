@@ -5,7 +5,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;

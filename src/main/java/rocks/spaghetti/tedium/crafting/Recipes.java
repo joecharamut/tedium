@@ -9,7 +9,7 @@ import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import rocks.spaghetti.tedium.Log;
+import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.mixin.IngredientMixin;
 import rocks.spaghetti.tedium.mixin.IngredientTagEntryMixin;
 

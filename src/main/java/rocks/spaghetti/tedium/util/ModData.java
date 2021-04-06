@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.util;
 
 import com.google.gson.Gson;
 import net.minecraft.client.MinecraftClient;
