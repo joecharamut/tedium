@@ -6,7 +6,6 @@ import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import rocks.spaghetti.tedium.Util;
 
 import java.util.EnumSet;
 
@@ -60,7 +59,7 @@ public class WalkTargetGoal extends Goal {
     @Override
     public void tick() {
         if (!this.entity.isInWalkTargetRange()
-                && this.entity.squaredDistanceTo(Util.Vec3iToVec3d(this.entity.getNavigation().getTargetPos())) < 8
+                && this.entity.squaredDistanceTo(Vec3d.ofBottomCenter(this.entity.getNavigation().getTargetPos())) < 8
                 && calculateNewTarget()) {
             this.entity.getNavigation().startMovingTo(this.x, this.y, this.z, 1.0D);
         }

@@ -31,6 +31,7 @@ import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.render.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
+import rocks.spaghetti.tedium.script.ScriptEnvironment;
 import rocks.spaghetti.tedium.web.WebHandlers;
 import rocks.spaghetti.tedium.web.WebServer;
 
@@ -46,6 +47,7 @@ import static net.minecraft.util.Util.NIL_UUID;
 
 public class ClientEntrypoint implements ClientModInitializer {
     private static final ExecutorQueue runInClientThread = new ExecutorQueue();
+    private static final Latch tickLatch = new Latch();
     private static boolean disableInput = false;
     private static boolean debugEnabled = false;
     private static AbstractInventory currentContainer = null;
@@ -136,6 +138,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         } else if (!enabled && !fake.isAiDisabled()) {
             disableInput = false;
             fake.setAiDisabled(true);
+            ScriptEnvironment.getInstance().interruptRunningScript();
             sendClientMessage(new TranslatableText("text.tedium.aiDisabled"));
         }
     }
@@ -164,6 +167,14 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         return imageHolder[0];
+    }
+
+    public static void awaitTick() {
+        try {
+            tickLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
@@ -236,6 +247,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         InteractionManager.tick();
+        tickLatch.release();
 
         while (openMenuKey.wasPressed()) {
             setFakePlayerState(false);

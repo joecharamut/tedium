@@ -18,6 +18,7 @@ import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.Log;
 import rocks.spaghetti.tedium.render.RenderHelper;
@@ -179,6 +180,16 @@ public class FakePlayer extends PathAwareEntity {
 
         if (this.hasPositionTarget()) {
             RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(this.getPositionTarget(), new Color(0x00ff00).getRGB()));
+        }
+    }
+
+    @Override
+    public boolean isInWalkTargetRange(BlockPos pos) {
+        double range = getPositionTargetRange();
+        if (range == -1.0F) {
+            return true;
+        } else {
+            return this.squaredDistanceTo(Vec3d.ofBottomCenter(getPositionTarget())) < range * range;
         }
     }
 

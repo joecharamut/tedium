@@ -7,9 +7,12 @@ import net.minecraft.block.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import org.graalvm.polyglot.*;
 import org.jetbrains.annotations.Nullable;
 import rocks.spaghetti.tedium.ClientEntrypoint;
@@ -24,11 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BooleanSupplier;
-import java.util.stream.Collectors;
 
 public class ScriptEnvironment {
     private static ScriptEnvironment instance = null;
@@ -50,6 +50,10 @@ public class ScriptEnvironment {
         return scriptExecutor.currentSource;
     }
 
+    public void interruptRunningScript() {
+        scriptExecutor.interrupt();
+    }
+
     public void execFile(File scriptFile) {
         if (!scriptFile.isFile()) return;
         scriptExecutor.execute(Scope.toSource(scriptFile));
@@ -61,36 +65,48 @@ public class ScriptEnvironment {
     }
 
     private static class ScriptExecutor {
-        private Runnable currentScript = null;
         private Source currentSource = null;
+        private Scope currentScope = null;
+        private Thread scriptThread;
 
         public void execute(Source source) {
-            if (currentScript != null) {
+            if (currentSource != null) {
                 Log.error("Already executing a script!");
                 return;
             }
 
             currentSource = source;
-            currentScript = () -> {
+            scriptThread = new Thread(() -> {
                 try (Scope scope = new Scope()) {
+                    currentScope = scope;
                     scope.eval(source);
                 } catch (Exception e) {
                     scriptExceptionHandler(e);
                 } finally {
                     ClientEntrypoint.setFakePlayerState(false);
-                    currentScript = null;
                     currentSource = null;
+                    currentScope = null;
                 }
-            };
-
-            Thread scriptThread = new Thread(currentScript);
+            });
             scriptThread.setName("Script Execution Thread");
             scriptThread.start();
+        }
+
+        private void interrupt() {
+            currentScope.context.close(true);
+            scriptThread.interrupt();
         }
 
         private static void scriptExceptionHandler(Exception e) {
             if (e instanceof PolyglotException) {
                 PolyglotException polyException = (PolyglotException) e;
+
+                if (polyException.isCancelled() || polyException.isInterrupted()) {
+                    Log.info("Script has been interrupted");
+                    ClientEntrypoint.sendClientMessage(new TranslatableText("text.tedium.scriptInterrupted"));
+                    return;
+                }
+
                 Log.error("Script Exception:");
                 Log.catching(e);
 
@@ -149,7 +165,7 @@ public class ScriptEnvironment {
                     .build();
             Value bindings = context.getBindings(LANGUAGE);
             bindings.putMember("Sys", new SysApi());
-            bindings.putMember("Data", new DataApi());
+            bindings.putMember("Util", new ScriptUtil());
             bindings.putMember("Minecraft", new MinecraftApi());
         }
 
@@ -196,8 +212,14 @@ public class ScriptEnvironment {
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
-        public static class DataApi {
+        public static class ScriptUtil {
+            public BlockPos blockPosOf(int x, int y, int z) {
+                return new BlockPos(x, y, z);
+            }
 
+            public Vec3d vec3dOf(double x, double y, double z) {
+                return new Vec3d(x, y, z);
+            }
         }
 
         @SuppressWarnings({"unused", "RedundantSuppression"})
@@ -254,6 +276,22 @@ public class ScriptEnvironment {
 
             public BlockState getBlockStateAt(int x, int y, int z) {
                 return FakePlayer.get().world.getBlockState(new BlockPos(x, y, z));
+            }
+
+            public void faceDirection(String direction) {
+                Direction dir = Direction.byName(direction);
+                if (dir == null) throw new IllegalArgumentException(String.format("Invalid direction \"%s\"", direction));
+                FakePlayer player = FakePlayer.get();
+                player.yaw = dir.asRotation();
+                waitWhile(() -> player.getYaw(1.0F) != dir.asRotation());
+                ClientEntrypoint.awaitTick();
+            }
+
+            public void moveForward(double amount) {
+                FakePlayer player = FakePlayer.get();
+                BlockPos target = Util.applyOffsetWithFacing(player.getHorizontalFacing(), player.getBlockPos(), new Vec3i(amount, 0, 0));
+                player.setPositionTarget(target, 1);
+                waitWhile(() -> !player.getNavigation().isIdle() || !player.isInWalkTargetRange());
             }
         }
     }
