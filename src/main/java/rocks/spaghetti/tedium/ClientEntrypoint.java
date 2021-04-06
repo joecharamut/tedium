@@ -23,6 +23,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+import rocks.spaghetti.tedium.ai.path.AStar;
+import rocks.spaghetti.tedium.ai.path.Pathfinder;
 import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.AbstractInventory;
 import rocks.spaghetti.tedium.core.FakePlayer;
@@ -78,8 +80,15 @@ public class ClientEntrypoint implements ClientModInitializer {
             Constants.CATEGORY_KEYS
     ));
 
+    private static final KeyBinding testKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.tedium.test",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_K,
+            Constants.CATEGORY_KEYS
+    ));
+
     public static final KeyBinding[] modKeybindings = {
-            openMenuKey, toggleDebugKey
+            openMenuKey, toggleDebugKey, testKey
     };
 
     private static class ExecutorQueue implements Executor {
@@ -215,7 +224,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         BlockPos start = new BlockPos(184, 64, -110);
         BlockPos goal = new BlockPos(191, 64, -105);
 
-        AStar pathfinder = new AStar(start, goal);
+        Pathfinder pathfinder = new AStar();
 
         RenderHelper.clearListeners();
         RenderHelper.addListener(() -> {
@@ -225,7 +234,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         new Thread(() -> {
             long startTime = System.currentTimeMillis();
-            Optional<List<Vec3i>> path = pathfinder.aStar();
+            Optional<List<Vec3i>> path = pathfinder.findPath(start, goal);
             long endTime = System.currentTimeMillis();
 
             if (path.isPresent()) {
@@ -274,9 +283,12 @@ public class ClientEntrypoint implements ClientModInitializer {
             client.openScreen(ControlGui.createScreen());
         }
 
-        while (toggleDebugKey.wasPressed()) {
-//            debugEnabled = !debugEnabled;
+        while (testKey.wasPressed()) {
             test();
+        }
+
+        while (toggleDebugKey.wasPressed()) {
+            debugEnabled = !debugEnabled;
         }
 
         runInClientThread.runNext();

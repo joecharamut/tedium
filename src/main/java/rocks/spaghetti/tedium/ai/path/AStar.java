@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium;
+package rocks.spaghetti.tedium.ai.path;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -12,23 +12,21 @@ import rocks.spaghetti.tedium.util.Util;
 
 import java.util.*;
 
-public class AStar {
+public class AStar implements Pathfinder {
     private static final int MAX_DISTANCE = 32;
-
-    private final Vec3i start;
-    private final Vec3i goal;
 
     private final PriorityQueue<Vec3i> openSet = new PriorityQueue<>(Comparator.comparingDouble(this::score));
     private final Map<Vec3i, Double> gScore = new DefaultedHashMap<>(Double.POSITIVE_INFINITY);
     private final Map<Vec3i, Double> fScore = new DefaultedHashMap<>(Double.POSITIVE_INFINITY);
     private final Map<Vec3i, Vec3i> cameFrom = new HashMap<>();
 
-    public AStar(Vec3i start, Vec3i goal) {
+    private Vec3i start;
+    private Vec3i goal;
+
+    public Optional<List<Vec3i>> findPath(Vec3i start, Vec3i goal) {
         this.start = start;
         this.goal = goal;
-    }
 
-    public Optional<List<Vec3i>> aStar() {
         openSet.add(start);
         gScore.put(start, 0.0D);
         fScore.put(start, heuristic(start));
