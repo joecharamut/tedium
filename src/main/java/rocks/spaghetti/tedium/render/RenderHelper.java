@@ -24,6 +24,10 @@ public class RenderHelper {
     private static final Queue<Renderable> beforeDebugQueue = new ArrayDeque<>();
     private static final Queue<Renderable> afterEntitiesQueue = new ArrayDeque<>();
 
+    public static void clearListeners() {
+        listeners.clear();
+    }
+
     public static void addListener(RenderListener listener) {
         listeners.add(listener);
     }

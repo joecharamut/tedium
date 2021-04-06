@@ -20,6 +20,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.config.ModConfig;
@@ -39,8 +40,11 @@ import rocks.spaghetti.tedium.util.ModData;
 import rocks.spaghetti.tedium.web.WebHandlers;
 import rocks.spaghetti.tedium.web.WebServer;
 
+import java.awt.Color;
 import java.net.BindException;
 import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -205,24 +209,36 @@ public class ClientEntrypoint implements ClientModInitializer {
         WorldRenderEvents.START.register(RenderHelper::start);
         WorldRenderEvents.AFTER_ENTITIES.register(RenderHelper::afterEntities);
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::beforeDebugRenderer);
+    }
+
+    private void test() {
+        BlockPos start = new BlockPos(184, 64, -110);
+        BlockPos goal = new BlockPos(191, 64, -105);
+
+        AStar pathfinder = new AStar(start, goal);
+
+        RenderHelper.clearListeners();
         RenderHelper.addListener(() -> {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(207, 65, -120), 0x00ff00));
-
-            int x1 = 211;
-            int x2 = 211;
-            int y1 = 66;
-            int y2 = 70;
-            int z1 = -125;
-            int z2 = -119;
-
-            for (int a = x1; a <= x2; a++) {
-                for (int b = y1; b <= y2; b++) {
-                    for (int c = z1; c <= z2; c++) {
-                        RenderHelper.queueRenderable(new RenderHelper.FloatingText(new LiteralText("☺"), new BlockPos(a, b, c)));
-                    }
-                }
-            }
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(start, Color.ORANGE.getRGB()));
+            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(goal, Color.MAGENTA.getRGB()));
         });
+
+        new Thread(() -> {
+            long startTime = System.currentTimeMillis();
+            Optional<List<Vec3i>> path = pathfinder.aStar();
+            long endTime = System.currentTimeMillis();
+
+            if (path.isPresent()) {
+                Log.info("Path found in {} ms: {}", endTime - startTime, path);
+                RenderHelper.addListener(() -> {
+                    for (Vec3i node : path.get()) {
+                        RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(node), Color.PINK.getRGB()));
+                    }
+                });
+            } else {
+                Log.info("No path found in {} ms: {}", endTime - startTime, path);
+            }
+        }).start();
     }
 
     private void onSaveConfig(ModConfig config) {
@@ -259,7 +275,8 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
 
         while (toggleDebugKey.wasPressed()) {
-            debugEnabled = !debugEnabled;
+//            debugEnabled = !debugEnabled;
+            test();
         }
 
         runInClientThread.runNext();
