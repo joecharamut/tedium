@@ -11,6 +11,22 @@ import java.io.*;
 public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
 
+    public static Direction directionFromVector(int x, int y, int z) {
+        int ax = Math.abs(x);
+        int ay = Math.abs(y);
+        int az = Math.abs(z);
+
+        if (ax >= ay && ax >= az) {
+            return Direction.from(Direction.Axis.X, x > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE);
+        } else if (ay >= ax && ay >= az) {
+            return Direction.from(Direction.Axis.Y, y > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE);
+        } else if (az >= ax && az >= ay) {
+            return Direction.from(Direction.Axis.Z, z > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE);
+        }
+
+        return null;
+    }
+
     public static Vec3d applyOffsetWithFacing(Direction facing, Vec3d pos, Vec3d offset) {
         Vec3d outputPos = pos.add(0, offset.getY(), 0);
 
