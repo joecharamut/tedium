@@ -175,11 +175,11 @@ public class FakePlayer extends PathAwareEntity {
 
         BlockPos navTarget = this.getNavigation().getTargetPos();
         if (navTarget != null) {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(navTarget, new Color(0x00CCFF).getRGB()));
+            RenderHelper.queue(new RenderHelper.OutlineRegion(navTarget, new Color(0x00CCFF).getRGB()));
         }
 
         if (this.hasPositionTarget()) {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(this.getPositionTarget(), new Color(0x00ff00).getRGB()));
+            RenderHelper.queue(new RenderHelper.OutlineRegion(this.getPositionTarget(), new Color(0x00ff00).getRGB()));
         }
     }
 
