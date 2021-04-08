@@ -11,16 +11,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayDeque;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class RenderHelper {
     private RenderHelper() { throw new IllegalStateException("Utility Class"); }
     private static final Vec3d UNIT_VECTOR = new Vec3d(1, 1, 1);
 
-    private static final List<RenderListener> listeners = new LinkedList<>();
+    private static final Queue<RenderListener> listeners = new ConcurrentLinkedQueue<>();
     private static final Queue<Renderable> beforeDebugQueue = new ArrayDeque<>();
     private static final Queue<Renderable> afterEntitiesQueue = new ArrayDeque<>();
 
@@ -32,15 +30,17 @@ public class RenderHelper {
         listeners.add(listener);
     }
 
-    public static void queueRenderable(Renderable obj) {
+    public static void queue(Renderable... objs) {
         RenderSystem.assertThread(RenderSystem::isOnRenderThread);
 
-        if (obj instanceof OutlineRegion) {
-            beforeDebugQueue.add(obj);
-        } else if (obj instanceof FloatingText) {
-            afterEntitiesQueue.add(obj);
-        } else {
-            beforeDebugQueue.add(obj);
+        for (Renderable obj : objs) {
+            if (obj instanceof OutlineRegion) {
+                beforeDebugQueue.add(obj);
+            } else if (obj instanceof FloatingText) {
+                afterEntitiesQueue.add(obj);
+            } else {
+                beforeDebugQueue.add(obj);
+            }
         }
     }
 
@@ -98,8 +98,12 @@ public class RenderHelper {
             this.fill = fill;
         }
 
+        public OutlineRegion(BlockPos origin, int color, boolean fill) {
+            this(origin, UNIT_VECTOR, color, true, fill);
+        }
+
         public OutlineRegion(BlockPos origin, int color) {
-            this(origin, UNIT_VECTOR, color, true, true);
+            this(origin, UNIT_VECTOR, color, true, false);
         }
 
         @Override
@@ -265,6 +269,46 @@ public class RenderHelper {
             float halfWidth = -textRenderer.getWidth(text) / 2.0F;
             textRenderer.draw(text, halfWidth, 0, 0xffffffff, false, matrices.peek().getModel(), context.consumers(), false, 0x3f000000, 0xf00010);
             matrices.pop();
+        }
+    }
+
+    public static class PathLine implements Renderable {
+        private final Vec3d[] blocks;
+        private final int color;
+
+        public PathLine(List<BlockPos> blocks, int color) {
+            this.blocks = blocks.stream().map(Vec3d::ofCenter).toArray(Vec3d[]::new);
+            this.color = color;
+        }
+
+        @Override
+        public void render(WorldRenderContext context) {
+            RenderSystem.assertThread(RenderSystem::isOnGameThread);
+
+            float r = ((color >> 16) & 255) / 255.0f;
+            float g = ((color >>  8) & 255) / 255.0f;
+            float b = ((color >>  0) & 255) / 255.0f;
+
+            RenderSystem.lineWidth(1.5f);
+
+            Vec3d prev = null;
+            Vec3d cameraPos = context.camera().getPos();
+
+            for (Vec3d current : blocks) {
+                if (prev != null) {
+                    double fromX = prev.x - cameraPos.x;
+                    double fromY = prev.y - cameraPos.y;
+                    double fromZ = prev.z - cameraPos.z;
+
+                    double toX = current.x - cameraPos.x;
+                    double toY = current.y - cameraPos.y;
+                    double toZ = current.z - cameraPos.z;
+
+                    glRenderLines(new double[][]{{fromX, fromY, fromZ}, {toX, toY, toZ}}, r, g, b, 1.0f);
+                }
+
+                prev = current;
+            }
         }
     }
 
