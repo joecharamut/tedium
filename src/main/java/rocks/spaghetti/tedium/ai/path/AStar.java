@@ -14,11 +14,13 @@ import java.util.*;
 
 public class AStar implements Pathfinder {
     private static final int MAX_DISTANCE = 32;
+    private static final Direction[] HORIZONTAL_DIRECTIONS = { Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST };
 
     private final PriorityQueue<Vec3i> openSet = new PriorityQueue<>(Comparator.comparingDouble(this::score));
     private final Map<Vec3i, Double> gScore = new DefaultedHashMap<>(Double.POSITIVE_INFINITY);
     private final Map<Vec3i, Double> fScore = new DefaultedHashMap<>(Double.POSITIVE_INFINITY);
     private final Map<Vec3i, Vec3i> cameFrom = new HashMap<>();
+    private Vec3i last = null;
 
     private Vec3i start;
     private Vec3i goal;
@@ -33,6 +35,7 @@ public class AStar implements Pathfinder {
 
         while (!openSet.isEmpty()) {
             Vec3i current = openSet.peek();
+
             if (current.equals(goal)) {
                 return reconstructPath(current);
             }
@@ -49,6 +52,8 @@ public class AStar implements Pathfinder {
                     }
                 }
             }
+
+            last = current;
         }
 
         return Optional.empty();
@@ -82,27 +87,41 @@ public class AStar implements Pathfinder {
         ClientWorld world = MinecraftClient.getInstance().world;
         if (world != null && player != null) {
             BlockPos neighborPos = new BlockPos(neighbor);
-            BlockState state = world.getBlockState(neighborPos);
+            BlockState neighborBlock = world.getBlockState(neighborPos);
+            BlockState aboveBlock = world.getBlockState(neighborPos.up());
+            BlockState belowBlock = world.getBlockState(neighborPos.down());
 
-            if (state.isSolidBlock(world, neighborPos)) {
-                // cant walk thru solid
+            if (neighborBlock.isSolidBlock(world, neighborPos)
+                    || aboveBlock.isSolidBlock(world, neighborPos.up())
+                    || (!belowBlock.isSolidBlock(world, neighborPos.down()) && !last.equals(neighborPos.down()))
+            ) {
+                // cant walk thru solid blocks
                 return Double.POSITIVE_INFINITY;
             } else {
                 int diff = neighbor.getY() - node.getY();
-                if (diff == 0) {
-                    return node.getManhattanDistance(neighbor);
-                } else if (diff > 0) {
-                    BlockPos jumpPos = Util.applyOffsetWithFacing(player.getHorizontalFacing(), neighborPos, new Vec3i(1, 0, 0)).down();
-                    BlockState jumpGround = world.getBlockState(jumpPos);
-                    if (jumpGround.isSolidBlock(world, jumpPos)) {
-                        return node.getManhattanDistance(jumpPos);
-                    } else {
-                        // no valid jump destination
-                        return Double.POSITIVE_INFINITY;
+                if (diff > 0) {
+                    for (Direction dir : HORIZONTAL_DIRECTIONS) {
+                        BlockPos jumpPos = Util.applyOffsetWithFacing(dir, neighborPos, new Vec3i(1, -1, 0));
+                        BlockState jumpGround = world.getBlockState(jumpPos);
+                        if (jumpGround.isSolidBlock(world, jumpPos)) {
+                            return node.getManhattanDistance(jumpPos);
+                        }
                     }
-                } else if (diff < 0) {
-                    // todo impl down
+
+                    // no valid jump destination
                     return Double.POSITIVE_INFINITY;
+                } else if (diff < 0) {
+                    int max = 3;
+                    for (int i = 1; i <= max; i++) {
+                        BlockPos fallPos = new BlockPos(neighborPos).down();
+                        BlockState fallGround = world.getBlockState(fallPos);
+                        if (fallGround.isSolidBlock(world, fallPos)) {
+                            return node.getManhattanDistance(fallPos);
+                        }
+                    }
+                    return Double.POSITIVE_INFINITY;
+                } else {
+                    return node.getManhattanDistance(neighbor);
                 }
             }
         }
