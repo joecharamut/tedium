@@ -3,35 +3,32 @@ package rocks.spaghetti.tedium;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotUtils;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.ai.goals.GoalBlock;
-import rocks.spaghetti.tedium.ai.path.*;
+import rocks.spaghetti.tedium.ai.path.AStarPathFinder;
+import rocks.spaghetti.tedium.ai.path.Path;
+import rocks.spaghetti.tedium.ai.path.PathContext;
+import rocks.spaghetti.tedium.ai.path.PathExecutor;
 import rocks.spaghetti.tedium.config.ModConfig;
-import rocks.spaghetti.tedium.events.*;
-import rocks.spaghetti.tedium.util.*;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
-import rocks.spaghetti.tedium.mixin.MinecraftClientAccessor;
-import rocks.spaghetti.tedium.render.ControlGui;
+import rocks.spaghetti.tedium.events.*;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
+import rocks.spaghetti.tedium.util.*;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Queue;
@@ -42,36 +39,7 @@ import java.util.function.Consumer;
 
 public class ClientEntrypoint implements ClientModInitializer {
     private static final ExecutorQueue runInClientThread = new ExecutorQueue();
-    private static final Latch tickLatch = new Latch();
-    private static boolean debugEnabled = false;
-
-    private final DebugHud debugHud = new DebugHud();
     private boolean connected = false;
-
-    private static final KeyBinding openMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.openMenu",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_F9,
-            Constants.CATEGORY_KEYS
-    ));
-
-    private static final KeyBinding toggleDebugKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.toggleDebug",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_F10,
-            Constants.CATEGORY_KEYS
-    ));
-
-    private static final KeyBinding testKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-            "key.tedium.test",
-            InputUtil.Type.KEYSYM,
-            GLFW.GLFW_KEY_K,
-            Constants.CATEGORY_KEYS
-    ));
-
-    public static final KeyBinding[] modKeybindings = {
-            openMenuKey, toggleDebugKey, testKey
-    };
 
     private static class ExecutorQueue implements Executor {
         final Queue<Runnable> tasks = new ArrayDeque<>();
@@ -115,14 +83,6 @@ public class ClientEntrypoint implements ClientModInitializer {
         return imageHolder[0];
     }
 
-    public static void awaitTick() {
-        try {
-            tickLatch.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     @Override
     public void onInitializeClient() {
         Log.info("Hello from {}!", Constants.MOD_ID);
@@ -130,19 +90,9 @@ public class ClientEntrypoint implements ClientModInitializer {
         ModData.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(this::endClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(KeyBindings::tick);
 
-        HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-            GameOptions options = ((MinecraftClientAccessor) MinecraftClient.getInstance()).getGameOptions();
-
-            // dont draw over/under debug menu or player list
-            if (options.debugEnabled) return;
-            if (!client.isInSingleplayer() && options.keyPlayerList.isPressed()) return;
-
-            if (debugEnabled) {
-                debugHud.render(matrixStack, tickDelta);
-            }
-        });
+        HudRenderCallback.EVENT.register(DebugHud::render);
 
         WorldRenderEvents.START.register(RenderHelper::start);
         WorldRenderEvents.AFTER_ENTITIES.register(RenderHelper::afterEntities);
@@ -158,7 +108,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         KeyPressCallback.EVENT.register(key -> {
             if (Minecraft.isInputDisabled()) {
-                for (KeyBinding bind : ClientEntrypoint.modKeybindings) {
+                for (KeyBinding bind : KeyBindings.modKeybindings) {
                     if (key.getTranslationKey().equals(bind.getBoundKeyTranslationKey())) {
                         return ActionResult.PASS;
                     }
@@ -234,20 +184,11 @@ public class ClientEntrypoint implements ClientModInitializer {
         if (!connected) return;
 
         InteractionManager.tick();
-        tickLatch.release();
 
-        while (openMenuKey.wasPressed()) {
-            client.openScreen(ControlGui.createScreen());
-        }
-
-        while (testKey.wasPressed()) {
+        while (KeyBindings.testKey.wasPressed()) {
             test();
         }
         if (executor != null) executor.tick();
-
-        while (toggleDebugKey.wasPressed()) {
-            debugEnabled = !debugEnabled;
-        }
 
         runInClientThread.runNext();
     }
