@@ -20,11 +20,10 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
-import rocks.spaghetti.tedium.ai.path.AStar;
-import rocks.spaghetti.tedium.ai.path.Pathfinder;
+import rocks.spaghetti.tedium.ai.goals.GoalBlock;
+import rocks.spaghetti.tedium.ai.path.*;
 import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.AbstractInventory;
 import rocks.spaghetti.tedium.core.FakePlayer;
@@ -45,7 +44,6 @@ import rocks.spaghetti.tedium.web.WebServer;
 import java.awt.Color;
 import java.net.BindException;
 import java.util.ArrayDeque;
-import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
@@ -221,31 +219,25 @@ public class ClientEntrypoint implements ClientModInitializer {
     }
 
     private void test() {
-        BlockPos start = new BlockPos(184, 64, -110);
+//        BlockPos start = new BlockPos(184, 64, -110);
+        BlockPos start = MinecraftClient.getInstance().player.getBlockPos();
         BlockPos goal = new BlockPos(191, 64, -105);
 
-        Pathfinder pathfinder = new AStar();
-
         RenderHelper.clearListeners();
-        RenderHelper.addListener(() -> {
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(start, Color.ORANGE.getRGB()));
-            RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(goal, Color.MAGENTA.getRGB()));
-        });
+        RenderHelper.Renderable startOutline = new RenderHelper.OutlineRegion(start, Color.RED.getRGB(), true);
+        RenderHelper.Renderable goalOutline = new RenderHelper.OutlineRegion(goal, Color.GREEN.getRGB(), true);
+        RenderHelper.addListener(() -> RenderHelper.queue(startOutline, goalOutline));
+
+        AStarPathFinder pathFinder = new AStarPathFinder(start, new GoalBlock(goal), new PathContext(MinecraftClient.getInstance().world));
 
         new Thread(() -> {
-            long startTime = System.currentTimeMillis();
-            Optional<List<Vec3i>> path = pathfinder.findPath(start, goal);
-            long endTime = System.currentTimeMillis();
+            Optional<Path> result = pathFinder.calculate(-1);
 
-            if (path.isPresent()) {
-                Log.info("Path found in {} ms: {}", endTime - startTime, path);
-                RenderHelper.addListener(() -> {
-                    for (Vec3i node : path.get()) {
-                        RenderHelper.queueRenderable(new RenderHelper.OutlineRegion(new BlockPos(node), Color.PINK.getRGB()));
-                    }
-                });
-            } else {
-                Log.info("No path found in {} ms: {}", endTime - startTime, path);
+            if (result.isPresent()) {
+                Path path = result.get();
+                RenderHelper.Renderable pathLine = new RenderHelper.PathLine(path.getPath(), 0xff00ff);
+                RenderHelper.addListener(() -> RenderHelper.queue(pathLine));
+                executor = new PathExecutor(path);
             }
         }).start();
     }
@@ -258,6 +250,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         }
     }
 
+    private PathExecutor executor = null;
     private void endClientTick(MinecraftClient client) {
         if (connected && client.player == null && client.world == null) {
             // client disconnected from world
@@ -286,6 +279,7 @@ public class ClientEntrypoint implements ClientModInitializer {
         while (testKey.wasPressed()) {
             test();
         }
+        if (executor != null) executor.tick();
 
         while (toggleDebugKey.wasPressed()) {
             debugEnabled = !debugEnabled;
