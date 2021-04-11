@@ -8,41 +8,33 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.ScreenshotUtils;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.Formatting;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.ai.goals.GoalBlock;
 import rocks.spaghetti.tedium.ai.path.*;
 import rocks.spaghetti.tedium.config.ModConfig;
-import rocks.spaghetti.tedium.core.AbstractInventory;
-import rocks.spaghetti.tedium.core.FakePlayer;
+import rocks.spaghetti.tedium.events.DeathCallback;
+import rocks.spaghetti.tedium.events.KeyPressCallback;
+import rocks.spaghetti.tedium.events.MouseEvents;
+import rocks.spaghetti.tedium.events.PauseMenuCallback;
+import rocks.spaghetti.tedium.util.*;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
 import rocks.spaghetti.tedium.render.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
-import rocks.spaghetti.tedium.script.ScriptEnvironment;
-import rocks.spaghetti.tedium.util.Constants;
-import rocks.spaghetti.tedium.util.Latch;
-import rocks.spaghetti.tedium.util.Log;
-import rocks.spaghetti.tedium.util.ModData;
-import rocks.spaghetti.tedium.web.WebHandlers;
-import rocks.spaghetti.tedium.web.WebServer;
 
 import java.awt.Color;
-import java.net.BindException;
 import java.util.ArrayDeque;
 import java.util.Optional;
 import java.util.Queue;
@@ -50,17 +42,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-import static net.minecraft.util.Util.NIL_UUID;
-
 
 public class ClientEntrypoint implements ClientModInitializer {
     private static final ExecutorQueue runInClientThread = new ExecutorQueue();
     private static final Latch tickLatch = new Latch();
-    private static boolean disableInput = false;
     private static boolean debugEnabled = false;
-    private static AbstractInventory currentContainer = null;
 
-    private final WebServer webServer = new WebServer();
     private final DebugHud debugHud = new DebugHud();
     private boolean connected = false;
 
@@ -102,59 +89,6 @@ public class ClientEntrypoint implements ClientModInitializer {
             if ((active = tasks.poll()) != null) {
                 active.run();
             }
-        }
-    }
-
-    public static void sendClientMessage(MutableText message) {
-        MinecraftClient client = MinecraftClient.getInstance();
-
-        if (client.player == null) return;
-        if (message.getStyle().getColor() == null) {
-            message = message.formatted(Formatting.WHITE);
-        }
-
-        MutableText text = new LiteralText("[Tedium] ").formatted(Formatting.YELLOW).append(message);
-        client.player.sendSystemMessage(text, NIL_UUID);
-    }
-
-    public static void sendClientMessage(String message) {
-        sendClientMessage(new LiteralText(message).formatted(Formatting.WHITE));
-    }
-
-    public static boolean isInputDisabled() {
-        return disableInput;
-    }
-
-    public static boolean isDebugEnabled() {
-        return debugEnabled;
-    }
-
-    public static void onGameMenuOpened() {
-        setFakePlayerState(false);
-    }
-
-    public static void setOpenContainer(AbstractInventory newContainer) {
-        currentContainer = newContainer;
-    }
-
-    public static AbstractInventory getOpenContainer() {
-        return currentContainer;
-    }
-
-    public static void setFakePlayerState(boolean enabled) {
-        FakePlayer fake = FakePlayer.get();
-        MinecraftClient client = MinecraftClient.getInstance();
-
-        if (enabled && fake.isAiDisabled()) {
-            disableInput = true;
-            client.mouse.unlockCursor();
-            sendClientMessage(new TranslatableText("text.tedium.aiEnabled"));
-            fake.setAiDisabled(false);
-        } else if (!enabled && !fake.isAiDisabled()) {
-            disableInput = false;
-            fake.setAiDisabled(true);
-            ScriptEnvironment.getInstance().interruptRunningScript();
-            sendClientMessage(new TranslatableText("text.tedium.aiDisabled"));
         }
     }
 
@@ -216,6 +150,41 @@ public class ClientEntrypoint implements ClientModInitializer {
         WorldRenderEvents.START.register(RenderHelper::start);
         WorldRenderEvents.AFTER_ENTITIES.register(RenderHelper::afterEntities);
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(RenderHelper::beforeDebugRenderer);
+
+        DeathCallback.EVENT.register(() -> {
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player == null) return;
+            Log.info("Death: {}", player.getPos());
+        });
+
+        PauseMenuCallback.EVENT.register(() -> Minecraft.setInputDisabled(false));
+
+        KeyPressCallback.EVENT.register(key -> {
+            if (Minecraft.isInputDisabled()) {
+                for (KeyBinding bind : ClientEntrypoint.modKeybindings) {
+                    if (key.getTranslationKey().equals(bind.getBoundKeyTranslationKey())) {
+                        return ActionResult.PASS;
+                    }
+                }
+
+                return ActionResult.FAIL;
+            }
+
+            return ActionResult.PASS;
+        });
+
+        MouseEvents.LOCK_EVENT.register(() -> {
+            if (Minecraft.isInputDisabled()) return ActionResult.FAIL;
+            return ActionResult.PASS;
+        });
+        MouseEvents.BUTTON_EVENT.register((window, button, action, mods) -> {
+            if (Minecraft.isInputDisabled()) return ActionResult.FAIL;
+            return ActionResult.PASS;
+        });
+        MouseEvents.SCROLL_EVENT.register((window, horizontal, vertical) -> {
+            if (Minecraft.isInputDisabled()) return ActionResult.FAIL;
+            return ActionResult.PASS;
+        });
     }
 
     private void test() {
@@ -272,7 +241,6 @@ public class ClientEntrypoint implements ClientModInitializer {
         tickLatch.release();
 
         while (openMenuKey.wasPressed()) {
-            setFakePlayerState(false);
             client.openScreen(ControlGui.createScreen());
         }
 
@@ -296,28 +264,9 @@ public class ClientEntrypoint implements ClientModInitializer {
         // initialize everything for real
         ModData.loadWorld();
         Recipes.initRecipes(client.world);
-
-        if (ModConfig.isWebServerEnabled() && !webServer.isRunning()) {
-            try {
-                webServer.startServer();
-                new WebHandlers().registerWebContexts(webServer);
-                String webAddress = "http://localhost:" + ModConfig.getWebServerPort();
-                sendClientMessage(new TranslatableText("text.tedium.webServerStarted")
-                        .formatted(Formatting.WHITE)
-                        .append(new LiteralText(webAddress)
-                                .formatted(Formatting.WHITE).formatted(Formatting.UNDERLINE)
-                                .styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, webAddress)))));
-            } catch (BindException ex) {
-                sendClientMessage(new TranslatableText("text.tedium.webErrorStarting").formatted(Formatting.RED));
-            }
-        }
     }
 
     private void destroyComponents() {
         ModData.saveWorld();
-
-        if (webServer.isRunning()) {
-            webServer.stopServer();
-        }
     }
 }

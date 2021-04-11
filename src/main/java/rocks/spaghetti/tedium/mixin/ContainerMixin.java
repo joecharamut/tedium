@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import rocks.spaghetti.tedium.ClientEntrypoint;
 import rocks.spaghetti.tedium.util.Log;
-import rocks.spaghetti.tedium.core.AbstractInventory;
+import rocks.spaghetti.tedium.util.GenericContainer;
+import rocks.spaghetti.tedium.util.Minecraft;
 
 import java.util.List;
 
@@ -26,9 +26,9 @@ public abstract class ContainerMixin {
         Log.info("cls: {}", current);
         if (stacks.size() < 36) return;
 
-        AbstractInventory inv = new AbstractInventory(stacks, (ScreenHandler) (Object) this);
+        GenericContainer inv = new GenericContainer(stacks, (ScreenHandler) (Object) this);
         Log.info("ab: {}", inv);
-        ClientEntrypoint.setOpenContainer(inv);
+        Minecraft.setOpenContainer(inv);
     }
 
     @Inject(method = "close", at = @At("HEAD"))
@@ -40,7 +40,7 @@ public abstract class ContainerMixin {
         if (current == null) return;
 
         Log.info("closing: {}", current);
-        ClientEntrypoint.setOpenContainer(null);
+        Minecraft.setOpenContainer(null);
         current = null;
     }
 }

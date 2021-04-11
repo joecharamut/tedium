@@ -8,7 +8,6 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.minecraft.util.ActionResult;
 import rocks.spaghetti.tedium.util.Constants;
-import rocks.spaghetti.tedium.util.Log;
 
 import java.util.function.Consumer;
 
@@ -20,22 +19,10 @@ public class ModConfig implements ConfigData {
     private static Consumer<ModConfig> loadCallback = null;
     @ConfigEntry.Gui.Excluded
     private static Consumer<ModConfig> saveCallback = null;
-    @ConfigEntry.Gui.Excluded
-    private static final int DEFAULT_WEB_SERVER_PORT = 8383;
 
 
-    private boolean webServerEnabled = true;
-    private int webServerPort = DEFAULT_WEB_SERVER_PORT;
     private boolean enableFullbright = false;
 
-
-    public static int getWebServerPort() {
-        return getConfig().webServerPort;
-    }
-
-    public static boolean isWebServerEnabled() {
-        return getConfig().webServerEnabled;
-    }
 
     public static boolean isFullbrightEnabled() {
         return getConfig().enableFullbright;
@@ -51,14 +38,6 @@ public class ModConfig implements ConfigData {
 
     public static ModConfig getConfig() {
         return configHolder.getConfig();
-    }
-
-    @Override
-    public void validatePostLoad() throws ValidationException {
-        if (webServerPort < 1024 || webServerPort > 48000) {
-            Log.warn("Invalid Web Server Port: Value must be between 1024 and 48000, set to default.");
-            webServerPort = DEFAULT_WEB_SERVER_PORT;
-        }
     }
 
     private static ActionResult configLoadListener(ConfigHolder<ModConfig> holder, ModConfig config) {

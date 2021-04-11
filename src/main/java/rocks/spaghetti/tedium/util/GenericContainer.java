@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.core;
+package rocks.spaghetti.tedium.util;
 
 
 import net.minecraft.client.MinecraftClient;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class AbstractInventory {
+public class GenericContainer {
     private final MinecraftClient client = MinecraftClient.getInstance();
     private final ScreenHandler screen;
 
@@ -24,7 +24,7 @@ public class AbstractInventory {
     private final List<Slot> inventorySlots;
     private final List<Slot> externalSlots;
 
-    public AbstractInventory(List<ItemStack> eventStacks, ScreenHandler screen) {
+    public GenericContainer(List<ItemStack> eventStacks, ScreenHandler screen) {
         if (eventStacks.size() < 36) throw new IllegalArgumentException("Not enough slots");
         this.screen = screen;
 

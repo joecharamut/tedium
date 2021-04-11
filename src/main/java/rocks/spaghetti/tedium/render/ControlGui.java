@@ -17,10 +17,8 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import org.lwjgl.glfw.GLFW;
-import rocks.spaghetti.tedium.*;
 import rocks.spaghetti.tedium.render.gui.ToggleButton;
 import rocks.spaghetti.tedium.render.gui.TooltipButton;
-import rocks.spaghetti.tedium.script.ScriptEnvironment;
 import rocks.spaghetti.tedium.util.Constants;
 import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.util.ModData;
@@ -125,8 +123,6 @@ public class ControlGui extends LightweightGuiDescription {
                     .setOnClick(() -> {
                 Screen screen = MinecraftClient.getInstance().currentScreen;
                 if (screen != null) screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, -1, -1);
-                ClientEntrypoint.setFakePlayerState(true);
-                ScriptEnvironment.getInstance().execFile(selectedScript.file);
             });
             add(runButton, 0, GRID, 20, 20);
 

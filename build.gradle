@@ -32,12 +32,6 @@ repositories {
 
 dependencies {
 	implementation include(group: "org.nanohttpd", name: "nanohttpd", version: "2.3.1")
-	implementation include(group: "org.javassist", name: "javassist", version: "3.27.0-GA")
-
-	implementation include(group: "org.graalvm.js", name: "js", version: "21.0.0.2")
-	implementation include(group: "org.graalvm.regex", name: "regex", version: "21.0.0.2")
-	implementation include(group: "org.graalvm.sdk", name: "graal-sdk", version: "21.0.0.2")
-	implementation include(group: "org.graalvm.truffle", name: "truffle-api", version: "21.0.0.2")
 
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"

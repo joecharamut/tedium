@@ -6,6 +6,7 @@ import rocks.spaghetti.tedium.ai.goals.Goal;
 import rocks.spaghetti.tedium.ai.movement.ActionCosts;
 import rocks.spaghetti.tedium.ai.movement.Moves;
 import rocks.spaghetti.tedium.util.Log;
+import rocks.spaghetti.tedium.util.Minecraft;
 
 import java.util.*;
 
@@ -116,13 +117,15 @@ public class AStarPathFinder {
         if (cancelRequested) foundPath = Optional.empty();
         if (!foundPath.isPresent()) {
             foundPath = bestPathSoFar(nodeCount);
-            if (foundPath.isPresent()) ClientEntrypoint.sendClientMessage("Pathfinding failed, using best path so far");
+            if (foundPath.isPresent()) {
+                Minecraft.sendMessage("Pathfinding failed, using best path so far");
+            }
         }
 
         String debug = String.format("Pathfinding %s in %s ms (Considered %s movements, checked %s nodes)",
                 foundPath.isPresent() ? "succeeded" : "failed", System.currentTimeMillis() - startTime, movesConsidered, nodeCount);
         Log.info(debug);
-        ClientEntrypoint.sendClientMessage(debug);
+        Minecraft.sendMessage(debug);
 
         return foundPath;
     }

@@ -5,15 +5,7 @@
   "category.tedium.keys": "Tedium Controls",
 
   "text.autoconfig.tedium.title": "Tedium Config",
-  "text.autoconfig.tedium.option.webServerEnabled": "Enable Local Web Server",
-  "text.autoconfig.tedium.option.webServerPort": "Local Web Server Port",
   "text.autoconfig.tedium.option.enableFullbright": "Enable Increased Gamma",
-
-  "text.tedium.webServerStarted": "Local Web Server Started at ",
-  "text.tedium.webErrorStarting": "Error starting Local Web Server",
-  "text.tedium.aiEnabled": "AI Control enabled",
-  "text.tedium.aiDisabled": "AI Control disabled",
-  "text.tedium.scriptInterrupted": "Script Interrupted",
 
   "gui.tedium.tabMain": "Main",
   "gui.tedium.tabLocations": "Saved Locations",

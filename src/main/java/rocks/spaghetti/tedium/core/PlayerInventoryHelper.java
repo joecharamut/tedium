@@ -3,10 +3,12 @@ package rocks.spaghetti.tedium.core;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Pair;
+import rocks.spaghetti.tedium.util.Minecraft;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,17 +18,17 @@ import java.util.stream.IntStream;
 
 public class PlayerInventoryHelper {
     private final MinecraftClient client;
-    private final FakePlayer player;
+    private final ClientPlayerEntity player;
 
-    public PlayerInventoryHelper(FakePlayer player) {
+    public PlayerInventoryHelper() {
         this.client = MinecraftClient.getInstance();
-        this.player = player;
+        this.player = Minecraft.player();
     }
 
-    public static int getToolSlotFor(FakePlayer player, BlockState block) {
+    public static int getToolSlotFor(ClientPlayerEntity player, BlockState block) {
         if (!block.isToolRequired()) return -1;
 
-        PlayerInventory inventory = player.getRealPlayer().inventory;
+        PlayerInventory inventory = player.inventory;
         return IntStream.range(0, inventory.main.size() - 1)
                 .mapToObj(i -> new Pair<>(i, inventory.main.get(i)))
                 .filter(pair -> pair.getRight().isEffectiveOn(block))
@@ -37,7 +39,7 @@ public class PlayerInventoryHelper {
 
     public Map<Item, Integer> getItemCounts() {
         // todo damage values all counted as same item
-        PlayerInventory inventory = player.getRealPlayer().inventory;
+        PlayerInventory inventory = player.inventory;
         Map<Item, Integer> items = new HashMap<>();
 
         for (ItemStack stack : inventory.main) {
@@ -55,7 +57,7 @@ public class PlayerInventoryHelper {
     }
 
     public Integer[] getEmptySlots() {
-        PlayerInventory inventory = player.getRealPlayer().inventory;
+        PlayerInventory inventory = player.inventory;
         ArrayList<Integer> emptySlots = new ArrayList<>();
 
         for (int i = 0; i < inventory.main.size(); ++i) {

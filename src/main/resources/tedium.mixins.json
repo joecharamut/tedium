@@ -5,8 +5,6 @@
   "mixins": [ ],
   "client": [
     "MinecraftClientMixin",
-    "PlayerEntityMixin",
-    "KeyboardInputMixin",
     "MouseMixin",
     "GoalSelectorMixin",
     "KeyBindingMixin",
