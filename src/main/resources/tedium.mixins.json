@@ -12,7 +12,8 @@
     "IngredientMixin",
     "IngredientTagEntryMixin",
     "ContainerMixin",
-    "ClientPlayNetworkHandlerMixin"
+    "ClientPlayNetworkHandlerMixin",
+    "RecipeManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

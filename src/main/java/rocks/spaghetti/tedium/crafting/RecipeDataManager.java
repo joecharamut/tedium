@@ -8,7 +8,6 @@ import net.minecraft.tag.ServerTagManagerHolder;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
 import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.mixin.IngredientMixin;
 import rocks.spaghetti.tedium.mixin.IngredientTagEntryMixin;
@@ -16,35 +15,29 @@ import rocks.spaghetti.tedium.mixin.IngredientTagEntryMixin;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Recipes {
-    private Recipes() { throw new IllegalStateException("Utility Class"); }
+public class RecipeDataManager {
+    private RecipeDataManager() { throw new IllegalStateException("Utility Class"); }
 
     private static final Map<Item, CraftingRecipe> recipesByOutput = new HashMap<>();
     private static final Map<CraftingRecipe, Map<String, Integer>> recipeIngredients = new HashMap<>();
 
     public static CraftingRecipe CRAFTING_TABLE;
 
-    public static void initRecipes(final World world) {
-        Thread recipeThread = new Thread(() -> {
-            long startTime = System.currentTimeMillis();
-            Log.info("Loading recipes...");
-
-            initRecipeThread(world);
-
-            long endTime = System.currentTimeMillis();
-            Log.info("Done ({} ms)", endTime - startTime);
-        });
-        recipeThread.start();
+    public static void init(RecipeManager manager) {
+        initRecipes(manager);
     }
 
-    private static void initRecipeThread(final World world) {
-        RecipeManager manager = world.getRecipeManager();
-        Optional<? extends Recipe<?>> temp;
+    private static void initRecipes(RecipeManager manager) {
+        long startTime = System.currentTimeMillis();
+        Log.info("Loading recipes...");
 
-        temp = manager.get(new Identifier("minecraft", "crafting_table"));
+        recipesByOutput.clear();
+        recipeIngredients.clear();
+
+        Optional<? extends Recipe<?>> temp = manager.get(new Identifier("minecraft", "crafting_table"));
         if (temp.isPresent() && temp.get() instanceof CraftingRecipe) CRAFTING_TABLE = (CraftingRecipe) temp.get();
 
-        for (CraftingRecipe recipe : world.getRecipeManager().listAllOfType(RecipeType.CRAFTING)) {
+        for (CraftingRecipe recipe : manager.listAllOfType(RecipeType.CRAFTING)) {
             recipesByOutput.put(recipe.getOutput().getItem(), recipe);
             Map<String, Integer> ingredientMap = new HashMap<>();
             boolean ingredientsOk = true;
@@ -71,7 +64,7 @@ public class Recipes {
                 } else {
                     List<Identifier> itemTags = Arrays
                             .stream(entries)
-                            .map(Recipes::toItemStack)
+                            .map(RecipeDataManager::toItemStack)
                             .map(ItemStack::getItem)
                             .map(item -> ItemTags.getTagGroup().getTagsFor(item))
                             .map(ids -> {
@@ -98,7 +91,7 @@ public class Recipes {
                         // todo: fix this
                         Log.warn("Entries > 1: {} {}",
                                 recipe.getId(),
-                                Arrays.stream(entries).map(Recipes::toItemStack).collect(Collectors.toList()));
+                                Arrays.stream(entries).map(RecipeDataManager::toItemStack).collect(Collectors.toList()));
                         ingredientsOk = false;
                         break;
                     }
@@ -109,6 +102,8 @@ public class Recipes {
                 recipeIngredients.put(recipe, ingredientMap);
             }
         }
+
+        Log.info("Loaded {} Recipes ({} ms)", recipesByOutput.size(), System.currentTimeMillis() - startTime);
     }
 
     public static CraftingRecipe getRecipeFor(Item item) {

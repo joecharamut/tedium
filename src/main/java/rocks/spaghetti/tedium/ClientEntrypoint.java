@@ -18,7 +18,6 @@ import rocks.spaghetti.tedium.ai.path.PathContext;
 import rocks.spaghetti.tedium.ai.path.PathExecutor;
 import rocks.spaghetti.tedium.config.ModConfig;
 import rocks.spaghetti.tedium.core.InteractionManager;
-import rocks.spaghetti.tedium.crafting.Recipes;
 import rocks.spaghetti.tedium.events.*;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
@@ -94,13 +93,13 @@ public class ClientEntrypoint implements ClientModInitializer {
         ClientEvents.JOIN_WORLD.register(() -> {
             if (!connected) {
                 connected = true;
-                initializeComponents();
+                ModData.loadWorld();
             }
         });
         ClientEvents.DISCONNECT.register(() -> {
             if (connected) {
                 connected = false;
-                destroyComponents();
+                ModData.saveWorld();
             }
         });
     }
@@ -135,19 +134,5 @@ public class ClientEntrypoint implements ClientModInitializer {
         } else {
             Option.GAMMA.setMax(1.0f);
         }
-    }
-
-    private void initializeComponents() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        assert client.world != null;
-        assert client.player != null;
-
-        // initialize everything for real
-        ModData.loadWorld();
-        Recipes.initRecipes(client.world);
-    }
-
-    private void destroyComponents() {
-        ModData.saveWorld();
     }
 }
