@@ -6,15 +6,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.options.Option;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.ScreenshotUtils;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.NotNull;
 import rocks.spaghetti.tedium.ai.goals.GoalBlock;
 import rocks.spaghetti.tedium.ai.path.AStarPathFinder;
 import rocks.spaghetti.tedium.ai.path.Path;
@@ -28,60 +24,13 @@ import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
 import rocks.spaghetti.tedium.util.*;
 
-import java.awt.*;
-import java.util.ArrayDeque;
+import java.awt.Color;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.function.Consumer;
 
 
 public class ClientEntrypoint implements ClientModInitializer {
-    private static final ExecutorQueue runInClientThread = new ExecutorQueue();
     private boolean connected = false;
-
-    private static class ExecutorQueue implements Executor {
-        final Queue<Runnable> tasks = new ArrayDeque<>();
-        Runnable active = null;
-
-        @Override
-        public synchronized void execute(@NotNull final Runnable runnable) {
-            tasks.offer(runnable);
-        }
-
-        protected synchronized void runNext() {
-            if ((active = tasks.poll()) != null) {
-                active.run();
-            }
-        }
-    }
-
-    public static void takeScreenshot(Consumer<NativeImage> callback) {
-        runInClientThread.execute(() -> {
-            Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
-            callback.accept(ScreenshotUtils.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer));
-        });
-    }
-
-    public static NativeImage takeScreenshotBlocking() {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final NativeImage[] imageHolder = { null };
-
-        takeScreenshot(image -> {
-            imageHolder[0] = image;
-            latch.countDown();
-        });
-
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            Log.catching(e);
-            Thread.currentThread().interrupt();
-        }
-
-        return imageHolder[0];
-    }
+    private PathExecutor executor = null;
 
     @Override
     public void onInitializeClient() {
@@ -89,8 +38,18 @@ public class ClientEntrypoint implements ClientModInitializer {
         ModConfig.register(null, this::onSaveConfig);
         ModData.register();
 
-        ClientTickEvents.END_CLIENT_TICK.register(this::endClientTick);
         ClientTickEvents.END_CLIENT_TICK.register(KeyBindings::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(ScreenshotUtil::onClientTick);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (!connected) return;
+
+            InteractionManager.tick();
+
+            while (KeyBindings.testKey.wasPressed()) {
+                test();
+            }
+            if (executor != null) executor.tick();
+        });
 
         HudRenderCallback.EVENT.register(DebugHud::render);
 
@@ -149,7 +108,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
     private void test() {
 //        BlockPos start = new BlockPos(184, 64, -110);
-        BlockPos start = MinecraftClient.getInstance().player.getBlockPos();
+        BlockPos start = Minecraft.player().getBlockPos();
         BlockPos goal = new BlockPos(191, 64, -105);
 
         RenderHelper.clearListeners();
@@ -177,20 +136,6 @@ public class ClientEntrypoint implements ClientModInitializer {
         } else {
             Option.GAMMA.setMax(1.0f);
         }
-    }
-
-    private PathExecutor executor = null;
-    private void endClientTick(MinecraftClient client) {
-        if (!connected) return;
-
-        InteractionManager.tick();
-
-        while (KeyBindings.testKey.wasPressed()) {
-            test();
-        }
-        if (executor != null) executor.tick();
-
-        runInClientThread.runNext();
     }
 
     private void initializeComponents() {
