@@ -24,7 +24,6 @@ import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
 import rocks.spaghetti.tedium.util.*;
 
-import java.awt.Color;
 import java.util.Optional;
 
 
@@ -112,8 +111,8 @@ public class ClientEntrypoint implements ClientModInitializer {
         BlockPos goal = new BlockPos(191, 64, -105);
 
         RenderHelper.clearListeners();
-        RenderHelper.Renderable startOutline = new RenderHelper.OutlineRegion(start, Color.RED.getRGB(), true);
-        RenderHelper.Renderable goalOutline = new RenderHelper.OutlineRegion(goal, Color.GREEN.getRGB(), true);
+        RenderHelper.Renderable startOutline = new RenderHelper.OutlineRegion(start, 0xff0000, true);
+        RenderHelper.Renderable goalOutline = new RenderHelper.OutlineRegion(goal, 0x00ff00, true);
         RenderHelper.addListener(() -> RenderHelper.queue(startOutline, goalOutline));
 
         AStarPathFinder pathFinder = new AStarPathFinder(start, new GoalBlock(goal), new PathContext(MinecraftClient.getInstance().world));
