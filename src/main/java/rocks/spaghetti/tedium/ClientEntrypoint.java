@@ -22,14 +22,11 @@ import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.ai.goals.GoalBlock;
 import rocks.spaghetti.tedium.ai.path.*;
 import rocks.spaghetti.tedium.config.ModConfig;
-import rocks.spaghetti.tedium.events.DeathCallback;
-import rocks.spaghetti.tedium.events.KeyPressCallback;
-import rocks.spaghetti.tedium.events.MouseEvents;
-import rocks.spaghetti.tedium.events.PauseMenuCallback;
+import rocks.spaghetti.tedium.events.*;
 import rocks.spaghetti.tedium.util.*;
 import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.crafting.Recipes;
-import rocks.spaghetti.tedium.mixin.MinecraftClientMixin;
+import rocks.spaghetti.tedium.mixin.MinecraftClientAccessor;
 import rocks.spaghetti.tedium.render.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
@@ -136,7 +133,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
         HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> {
             MinecraftClient client = MinecraftClient.getInstance();
-            GameOptions options = ((MinecraftClientMixin) MinecraftClient.getInstance()).getGameOptions();
+            GameOptions options = ((MinecraftClientAccessor) MinecraftClient.getInstance()).getGameOptions();
 
             // dont draw over/under debug menu or player list
             if (options.debugEnabled) return;
@@ -185,6 +182,15 @@ public class ClientEntrypoint implements ClientModInitializer {
             if (Minecraft.isInputDisabled()) return ActionResult.FAIL;
             return ActionResult.PASS;
         });
+
+        ClientEvents.JOIN_WORLD.register(() -> {
+            initializeComponents();
+            connected = true;
+        });
+        ClientEvents.DISCONNECT.register(() -> {
+            destroyComponents();
+            connected = false;
+        });
     }
 
     private void test() {
@@ -221,21 +227,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
     private PathExecutor executor = null;
     private void endClientTick(MinecraftClient client) {
-        if (connected && client.player == null && client.world == null) {
-            // client disconnected from world
-            destroyComponents();
-            connected = false;
-            return;
-        }
-
-        if (client.player == null) return;
-        if (client.world == null) return;
-
-        if (!connected) {
-            // client joined new world
-            initializeComponents();
-            connected = true;
-        }
+        if (!connected) return;
 
         InteractionManager.tick();
         tickLatch.release();

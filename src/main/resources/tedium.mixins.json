@@ -4,9 +4,9 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [ ],
   "client": [
-    "MinecraftClientMixin",
+    "MinecraftClientAccessor",
     "MouseMixin",
-    "GoalSelectorMixin",
+    "MinecraftClientMixin",
     "KeyBindingMixin",
     "GameMenuScreenMixin",
     "IngredientMixin",
