@@ -184,12 +184,16 @@ public class ClientEntrypoint implements ClientModInitializer {
         });
 
         ClientEvents.JOIN_WORLD.register(() -> {
-            initializeComponents();
-            connected = true;
+            if (!connected) {
+                connected = true;
+                initializeComponents();
+            }
         });
         ClientEvents.DISCONNECT.register(() -> {
-            destroyComponents();
-            connected = false;
+            if (connected) {
+                connected = false;
+                destroyComponents();
+            }
         });
     }
 

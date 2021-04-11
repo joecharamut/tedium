@@ -11,12 +11,12 @@ import rocks.spaghetti.tedium.events.ClientEvents;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
-    @Inject(method = "joinWorld(Lnet/minecraft/client/world/ClientWorld;)V", at = @At("HEAD"))
+    @Inject(method = "joinWorld(Lnet/minecraft/client/world/ClientWorld;)V", at = @At("TAIL"))
     public void onJoinWorld(ClientWorld world, CallbackInfo info) {
         ClientEvents.JOIN_WORLD.invoker().onJoin();
     }
 
-    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("HEAD"))
+    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("TAIL"))
     public void onDisconnect(Screen screen, CallbackInfo info) {
         ClientEvents.DISCONNECT.invoker().onDisconnect();
     }
