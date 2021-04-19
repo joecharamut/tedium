@@ -2,9 +2,12 @@ package rocks.spaghetti.tedium.ai.movement;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import rocks.spaghetti.tedium.ai.path.Path;
 import rocks.spaghetti.tedium.ai.path.PathContext;
 import rocks.spaghetti.tedium.ai.player.PlayerContext;
+import rocks.spaghetti.tedium.util.Rotation;
+import rocks.spaghetti.tedium.util.RotationUtil;
 
 public class MovementHorizontal extends Movement {
     private final PathContext pathContext;
@@ -50,8 +53,8 @@ public class MovementHorizontal extends Movement {
                 return state.setStatus(MovementStatus.SUCCESS);
             }
 
-            state.setInput(Input.SPRINT, true);
-
+            state.setInput(Input.FORWARD, true).setLookTarget(RotationUtil.rotationFromPosition(
+                    context.playerHead(), Vec3d.ofCenter(dest.up()), context.playerRotation()));
         } else {
             throw new AssertionError();
         }

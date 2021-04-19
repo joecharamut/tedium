@@ -15,6 +15,8 @@ public class PathExecutor {
     private int pathIndex = 0;
     private boolean finished = false;
 
+    private Runnable onFinish = null;
+
     public PathExecutor(Path path) {
         this.path = path;
         if (!this.path.processMovements()) {
@@ -24,10 +26,20 @@ public class PathExecutor {
         this.playerContext = new PlayerContext();
     }
 
+    public PathExecutor onFinish(Runnable callback) {
+        onFinish = callback;
+        return this;
+    }
+
+    private void finish() {
+        finished = true;
+        if (onFinish != null) onFinish.run();
+    }
+
     public void tick() {
         if (finished) return;
         if (pathIndex >= path.getMovements().size()) {
-            finished = true;
+            finish();
             return;
         }
 
@@ -35,7 +47,7 @@ public class PathExecutor {
         BlockPos currentPos = player.getBlockPos();
 
         if (path.goal.isInGoal(currentPos)) {
-            finished = true;
+            finish();
             return;
         }
 

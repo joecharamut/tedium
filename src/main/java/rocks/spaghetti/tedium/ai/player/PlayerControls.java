@@ -22,6 +22,13 @@ public class PlayerControls {
         Minecraft.setInputDisabled(state);
     }
 
+    public void clear() {
+        jumping(false);
+        sneaking(false);
+        sprinting(false);
+        movement(0, 0);
+    }
+
     public void jumping(boolean state) {
         assertEnabled();
         player.input.jumping = state;

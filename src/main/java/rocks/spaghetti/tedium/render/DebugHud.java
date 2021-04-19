@@ -1,10 +1,12 @@
 package rocks.spaghetti.tedium.render;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
+import rocks.spaghetti.tedium.util.Rotation;
 import rocks.spaghetti.tedium.mixin.MinecraftClientAccessor;
 import rocks.spaghetti.tedium.render.hud.HudComponent;
 import rocks.spaghetti.tedium.render.hud.TextGridComponent;
@@ -57,13 +59,10 @@ public class DebugHud {
         }
 
         if (MinecraftClient.getInstance().player != null) {
-            Vec3d playerPos = MinecraftClient.getInstance().player.getPos();
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            Vec3d playerPos = player.getPos();
             textGrid.upperLeft(String.format("Position: %.2f %.2f %.2f", playerPos.x, playerPos.y, playerPos.z));
-        }
-
-        if (aiControl) {
-            textGrid.upperLeft("");
-            textGrid.upperLeft("Goals:");
+            textGrid.upperLeft(new Rotation(player.pitch, player.yaw).normalizeAndClamp().toString());
         }
 
         components.add(textGrid);

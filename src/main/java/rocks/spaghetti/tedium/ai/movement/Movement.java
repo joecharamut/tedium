@@ -7,7 +7,7 @@ import rocks.spaghetti.tedium.ai.path.PathContext;
 public abstract class Movement {
     protected final BlockPos src;
     protected final BlockPos dest;
-    private MovementState currentState;
+    private MovementState currentState = new MovementState().setStatus(MovementStatus.INITIAL);
 
     public Movement(BlockPos src, BlockPos dest) {
         this.src = src;
@@ -47,13 +47,31 @@ public abstract class Movement {
 
     public MovementStatus update(PlayerContext context) {
         currentState = updateState(context, currentState);
+
         if (context.player().isTouchingWater()) {
             context.controls().jumping(true);
         }
 
-        if (context.pos().equals(dest)) {
-            return MovementStatus.SUCCESS;
+        currentState.getLookTarget().ifPresent(rotation -> context.controls().look(rotation.pitch, rotation.yaw));
+
+        float moveX = 0;
+        float moveZ = 0;
+        moveX += currentState.getInput(Input.FORWARD) ? 1.0 : 0.0;
+        moveX += currentState.getInput(Input.BACKWARD) ? -1.0 : 0.0;
+        moveZ += currentState.getInput(Input.RIGHT) ? 1.0 : 0.0;
+        moveZ += currentState.getInput(Input.LEFT) ? -1.0 : 0.0;
+        context.controls().movement(moveX, moveZ);
+
+        context.controls().jumping(currentState.getInput(Input.JUMP));
+        context.controls().sprinting(currentState.getInput(Input.SPRINT));
+        context.controls().sneaking(currentState.getInput(Input.SNEAK));
+
+        currentState.clearInputs();
+
+        if (currentState.getStatus().complete) {
+            context.controls().clear();
         }
-        return MovementStatus.WAITING;
+
+        return currentState.getStatus();
     }
 }

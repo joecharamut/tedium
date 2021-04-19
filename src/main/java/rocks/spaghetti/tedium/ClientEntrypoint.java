@@ -64,7 +64,10 @@ public class ClientEntrypoint implements ClientModInitializer {
             Log.info("Death: {}", player.getPos());
         });
 
-        PauseMenuCallback.EVENT.register(() -> Minecraft.setInputDisabled(false));
+        PauseMenuCallback.EVENT.register(() -> {
+            Minecraft.setInputDisabled(false);
+            executor = null;
+        });
 
         KeyPressCallback.EVENT.register(key -> {
             if (Minecraft.isInputDisabled()) {
@@ -126,7 +129,11 @@ public class ClientEntrypoint implements ClientModInitializer {
                 Path path = result.get();
                 Renderable pathLine = new PathLine(path.getPath(), 0xff00ff);
                 RenderHelper.addListener(() -> RenderHelper.queue(pathLine));
-                executor = new PathExecutor(path);
+                executor = new PathExecutor(path).onFinish(() -> {
+                    Minecraft.sendMessage("Finished executing path, seeya");
+                    Minecraft.setInputDisabled(false);
+                    executor = null;
+                });
             }
         }).start();
     }
