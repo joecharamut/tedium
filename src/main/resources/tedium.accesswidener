@@ -1,7 +1,7 @@
 accessWidener v1 named
 
 # Recipes
-extendable class net/minecraft/recipe/Ingredient
+accessible class net/minecraft/recipe/Ingredient
 accessible class net/minecraft/recipe/Ingredient$Entry
 accessible class net/minecraft/recipe/Ingredient$TagEntry
 accessible class net/minecraft/recipe/Ingredient$StackEntry

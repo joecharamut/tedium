@@ -9,8 +9,8 @@
     "MinecraftClientMixin",
     "KeyBindingMixin",
     "GameMenuScreenMixin",
-    "IngredientMixin",
-    "IngredientTagEntryMixin",
+    "IngredientAccessor",
+    "IngredientTagEntryAccessor",
     "ContainerMixin",
     "ClientPlayNetworkHandlerMixin",
     "RecipeManagerMixin"

@@ -9,8 +9,8 @@ import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import rocks.spaghetti.tedium.util.Log;
-import rocks.spaghetti.tedium.mixin.IngredientMixin;
-import rocks.spaghetti.tedium.mixin.IngredientTagEntryMixin;
+import rocks.spaghetti.tedium.mixin.IngredientAccessor;
+import rocks.spaghetti.tedium.mixin.IngredientTagEntryAccessor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +25,15 @@ public class RecipeDataManager {
 
     public static void init(RecipeManager manager) {
         initRecipes(manager);
+    }
+
+    public static CraftingRecipe getRecipeFor(Item item) {
+        return recipesByOutput.getOrDefault(item, null);
+    }
+
+    public static Map<String, Integer> getIngredientsFor(CraftingRecipe recipe) {
+        if (recipe == null) return Collections.emptyMap();
+        return recipeIngredients.getOrDefault(recipe, Collections.emptyMap());
     }
 
     private static void initRecipes(RecipeManager manager) {
@@ -106,32 +115,23 @@ public class RecipeDataManager {
         Log.info("Loaded {} Recipes ({} ms)", recipesByOutput.size(), System.currentTimeMillis() - startTime);
     }
 
-    public static CraftingRecipe getRecipeFor(Item item) {
-        return recipesByOutput.getOrDefault(item, null);
-    }
-
-    public static Map<String, Integer> getIngredientsFor(CraftingRecipe recipe) {
-        if (recipe == null) return Collections.emptyMap();
-        return recipeIngredients.getOrDefault(recipe, Collections.emptyMap());
-    }
-
-    public static Identifier getTagFor(Tag<Item> tag) {
+    private static Identifier getTagFor(Tag<Item> tag) {
         return ServerTagManagerHolder.getTagManager().getItems().getTagId(tag);
     }
 
-    public static Ingredient.Entry[] getEntriesFor(Ingredient ingredient) {
-        return ((IngredientMixin) ingredient).getEntries();
+    private static Ingredient.Entry[] getEntriesFor(Ingredient ingredient) {
+        return ((IngredientAccessor) (Object) ingredient).getEntries();
     }
 
-    public static Tag<Item> toItemTag(Ingredient.Entry entry) {
+    private static Tag<Item> toItemTag(Ingredient.Entry entry) {
         if (!(entry instanceof Ingredient.TagEntry)) {
             throw new IllegalArgumentException("Entry not instance of Ingredient.TagEntry");
         }
 
-        return ((IngredientTagEntryMixin) entry).getTag();
+        return ((IngredientTagEntryAccessor) entry).getTag();
     }
 
-    public static ItemStack toItemStack(Ingredient.Entry entry) {
+    private static ItemStack toItemStack(Ingredient.Entry entry) {
         if (!(entry instanceof Ingredient.StackEntry)) {
             throw new IllegalArgumentException("Entry not instance of Ingredient.StackEntry");
         }
