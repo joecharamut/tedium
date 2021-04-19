@@ -1,9 +1,8 @@
 package rocks.spaghetti.tedium.ai.player;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.MathHelper;
+import rocks.spaghetti.tedium.util.Minecraft;
 
 public class PlayerControls {
     private final ClientPlayerEntity player;
@@ -20,12 +19,7 @@ public class PlayerControls {
 
     public void setEnabled(boolean state) {
         enabled = state;
-        if (state) {
-            player.input = new KeyboardInputBlocker();
-            MinecraftClient.getInstance().mouse.unlockCursor();
-        } else {
-            player.input = new KeyboardInput(MinecraftClient.getInstance().options);
-        }
+        Minecraft.setInputDisabled(state);
     }
 
     public void jumping(boolean state) {
@@ -53,16 +47,5 @@ public class PlayerControls {
         assertEnabled();
         player.pitch = pitch;
         player.yaw = yaw;
-    }
-
-    private static class KeyboardInputBlocker extends KeyboardInput {
-        public KeyboardInputBlocker() {
-            super(null);
-        }
-
-        @Override
-        public void tick(boolean slowDown) {
-            // just disable the player inputs nothing special here
-        }
     }
 }

@@ -21,6 +21,9 @@ import rocks.spaghetti.tedium.core.InteractionManager;
 import rocks.spaghetti.tedium.events.*;
 import rocks.spaghetti.tedium.render.DebugHud;
 import rocks.spaghetti.tedium.render.RenderHelper;
+import rocks.spaghetti.tedium.render.renderable.OutlineRegion;
+import rocks.spaghetti.tedium.render.renderable.PathLine;
+import rocks.spaghetti.tedium.render.renderable.Renderable;
 import rocks.spaghetti.tedium.util.*;
 
 import java.util.Optional;
@@ -110,8 +113,8 @@ public class ClientEntrypoint implements ClientModInitializer {
         BlockPos goal = new BlockPos(191, 64, -105);
 
         RenderHelper.clearListeners();
-        RenderHelper.Renderable startOutline = new RenderHelper.OutlineRegion(start, 0xff0000, true);
-        RenderHelper.Renderable goalOutline = new RenderHelper.OutlineRegion(goal, 0x00ff00, true);
+        Renderable startOutline = new OutlineRegion(start, 0xff0000, true);
+        Renderable goalOutline = new OutlineRegion(goal, 0x00ff00, true);
         RenderHelper.addListener(() -> RenderHelper.queue(startOutline, goalOutline));
 
         AStarPathFinder pathFinder = new AStarPathFinder(start, new GoalBlock(goal), new PathContext(MinecraftClient.getInstance().world));
@@ -121,7 +124,7 @@ public class ClientEntrypoint implements ClientModInitializer {
 
             if (result.isPresent()) {
                 Path path = result.get();
-                RenderHelper.Renderable pathLine = new RenderHelper.PathLine(path.getPath(), 0xff00ff);
+                Renderable pathLine = new PathLine(path.getPath(), 0xff00ff);
                 RenderHelper.addListener(() -> RenderHelper.queue(pathLine));
                 executor = new PathExecutor(path);
             }

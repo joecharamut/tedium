@@ -12,7 +12,12 @@ public class PlayerContext {
     public PlayerContext() {
         player = Minecraft.player();
         controls = new PlayerControls(player);
+        controls.setEnabled(true);
         inventory = new PlayerInventory(player);
+    }
+
+    public ClientPlayerEntity player() {
+        return player;
     }
 
     public PlayerControls controls() {

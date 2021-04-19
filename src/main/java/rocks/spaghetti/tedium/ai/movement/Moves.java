@@ -54,7 +54,7 @@ public enum Moves {
         }
     },
 
-    UP_NORTH(0, +1, -1) {
+    /*UP_NORTH(0, +1, -1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
             return new MovementAscending(context, src, src.up().north());
@@ -148,7 +148,7 @@ public enum Moves {
         public double cost(PathContext context, PathNode node) {
             return MovementDescending.cost(context, node.asBlockPos(), node.asBlockPos().down().west());
         }
-    },
+    },*/
     ;
 
     public final int xOffset;

@@ -1,6 +1,7 @@
 package rocks.spaghetti.tedium.ai.movement;
 
 public enum MovementStatus {
+    INITIAL(false),
     PREPARING(false),
     WAITING(false),
     RUNNING(false),

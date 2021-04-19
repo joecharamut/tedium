@@ -16,6 +16,7 @@ public class ModData {
     private static final Gson gson = new Gson();
     private static File dataDir;
     private static File globalDir;
+    private static File schematicDir;
     private static File worldDir;
     private static File worldFile;
     private static WorldData WORLD;
@@ -34,6 +35,9 @@ public class ModData {
         globalDir = new File(dataDir, "global");
         mkdirIfNotExist(globalDir);
 
+        schematicDir = new File(dataDir, "schematics");
+        mkdirIfNotExist(schematicDir);
+
         worldDir = new File(dataDir, "world");
         mkdirIfNotExist(worldDir);
     }
@@ -43,18 +47,11 @@ public class ModData {
     }
 
     public static File[] getGlobalFiles() {
-        File[] output = new File[0];
+        return Util.listFilesIn(globalDir);
+    }
 
-        try (Stream<Path> files = Files.walk(globalDir.toPath(), FileVisitOption.FOLLOW_LINKS)) {
-            output = files
-                    .filter(Files::isRegularFile)
-                    .map(Path::toFile)
-                    .toArray(File[]::new);
-        } catch (IOException e) {
-            Log.catching(e);
-        }
-
-        return output;
+    public static File[] getSchematicFiles() {
+        return Util.listFilesIn(schematicDir);
     }
 
     public static void loadWorld() {

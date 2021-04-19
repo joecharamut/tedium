@@ -1,5 +1,8 @@
 package rocks.spaghetti.tedium.util;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -7,9 +10,33 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
 import java.io.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
+
+    public static String prettyPrintJson(String jsonString) {
+        JsonParser parser = new JsonParser();
+        JsonObject object = parser.parse(jsonString).getAsJsonObject();
+        return new GsonBuilder().setPrettyPrinting().create().toJson(object);
+    }
+
+    public static File[] listFilesIn(File dir) {
+        if (!dir.isDirectory()) return new File[0];
+
+        try (Stream<Path> files = Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .map(Path::toFile)
+                    .toArray(File[]::new);
+        } catch (IOException e) {
+            Log.catching(e);
+            return new File[0];
+        }
+    }
 
     public static Direction directionFromVector(int x, int y, int z) {
         int ax = Math.abs(x);
@@ -64,6 +91,17 @@ public class Util {
         net.minecraft.util.Util.getOperatingSystem().open(file);
     }
 
+    public static byte[] readFileToBytes(File theFile) {
+        try {
+            InputStream is = new FileInputStream(theFile);
+            return readInputStreamToBytes(is);
+        } catch (FileNotFoundException e) {
+            Log.catching(e);
+        }
+
+        return new byte[0];
+    }
+
     public static String readFileToString(File theFile) {
         try {
             InputStream is = new FileInputStream(theFile);
@@ -97,12 +135,6 @@ public class Util {
         }
     }
 
-    public static String getResourceAsString(String resource) {
-        InputStream is = Util.class.getClassLoader().getResourceAsStream(resource);
-        if (is == null) return "";
-        return readInputStreamToString(is);
-    }
-
     public static String readInputStreamToString(InputStream stream) {
         StringBuilder sb = new StringBuilder();
         int i;
@@ -123,27 +155,30 @@ public class Util {
         return sb.toString();
     }
 
-    public static byte[] getResourceAsBytes(String resource) {
-        InputStream is = Util.class.getClassLoader().getResourceAsStream(resource);
-        if (is == null) return new byte[0];
-
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    public static byte[] readInputStreamToBytes(InputStream input) {
         int i;
-        try {
-            while ((i = is.read()) != -1) {
-                bytes.write(i);
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try (InputStream stream = input) {
+            while ((i = stream.read()) != -1) {
+                os.write(i);
             }
         } catch (IOException e) {
             Log.catching(e);
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                Log.catching(e);
-            }
         }
 
-        return bytes.toByteArray();
+        return os.toByteArray();
+    }
+
+    public static byte[] getResourceAsBytes(String resource) {
+        InputStream is = Util.class.getClassLoader().getResourceAsStream(resource);
+        if (is == null) return new byte[0];
+        return readInputStreamToBytes(is);
+    }
+
+    public static String getResourceAsString(String resource) {
+        InputStream is = Util.class.getClassLoader().getResourceAsStream(resource);
+        if (is == null) return "";
+        return readInputStreamToString(is);
     }
 
     @SuppressWarnings("java:S100")

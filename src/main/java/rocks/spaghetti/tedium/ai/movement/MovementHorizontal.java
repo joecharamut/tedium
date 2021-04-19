@@ -2,11 +2,15 @@ package rocks.spaghetti.tedium.ai.movement;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
+import rocks.spaghetti.tedium.ai.path.Path;
 import rocks.spaghetti.tedium.ai.path.PathContext;
+import rocks.spaghetti.tedium.ai.player.PlayerContext;
 
 public class MovementHorizontal extends Movement {
+    private final PathContext pathContext;
     public MovementHorizontal(PathContext context, BlockPos src, BlockPos dest) {
         super(src, dest);
+        this.pathContext = context;
     }
 
     @Override
@@ -29,5 +33,29 @@ public class MovementHorizontal extends Movement {
         }
 
         return ActionCosts.INFINITY;
+    }
+
+    @Override
+    public MovementState updateState(PlayerContext context, MovementState state) {
+        state = super.updateState(context, state);
+
+        state.setInput(Input.SNEAK, false);
+
+        if (state.getStatus() != MovementStatus.RUNNING) {
+            // todo
+        }
+
+        if (pathContext.canWalkOn(dest.down())) {
+            if (context.pos().equals(dest)) {
+                return state.setStatus(MovementStatus.SUCCESS);
+            }
+
+            state.setInput(Input.SPRINT, true);
+
+        } else {
+            throw new AssertionError();
+        }
+
+        return state;
     }
 }
