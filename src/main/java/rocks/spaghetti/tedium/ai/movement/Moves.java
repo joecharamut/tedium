@@ -1,6 +1,9 @@
 package rocks.spaghetti.tedium.ai.movement;
 
 import net.minecraft.util.math.BlockPos;
+import rocks.spaghetti.tedium.ai.movement.moves.MovementAscend;
+import rocks.spaghetti.tedium.ai.movement.moves.MovementDescend;
+import rocks.spaghetti.tedium.ai.movement.moves.MovementHorizontal;
 import rocks.spaghetti.tedium.ai.path.MoveResult;
 import rocks.spaghetti.tedium.ai.path.PathContext;
 import rocks.spaghetti.tedium.ai.path.PathNode;
@@ -9,146 +12,158 @@ public enum Moves {
     NORTH(0, 0, -1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementHorizontal(context, src, src.north());
+            return new MovementHorizontal(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementHorizontal.cost(context, node.asBlockPos(), node.asBlockPos().north());
-        }
-    },
-
-    SOUTH(0, 0, +1) {
-        @Override
-        public Movement apply(PathContext context, BlockPos src) {
-            return new MovementHorizontal(context, src, src.south());
-        }
-
-        @Override
-        public double cost(PathContext context, PathNode node) {
-            return MovementHorizontal.cost(context, node.asBlockPos(), node.asBlockPos().south());
+            BlockPos pos = node.asBlockPos();
+            return MovementHorizontal.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     EAST(+1, 0, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementHorizontal(context, src, src.east());
+            return new MovementHorizontal(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementHorizontal.cost(context, node.asBlockPos(), node.asBlockPos().east());
+            BlockPos pos = node.asBlockPos();
+            return MovementHorizontal.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
+        }
+    },
+
+    SOUTH(0, 0, +1) {
+        @Override
+        public Movement apply(PathContext context, BlockPos src) {
+            return new MovementHorizontal(context, src, src.add(xOffset, yOffset, zOffset));
+        }
+
+        @Override
+        public double cost(PathContext context, PathNode node) {
+            BlockPos pos = node.asBlockPos();
+            return MovementHorizontal.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     WEST(-1, 0, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementHorizontal(context, src, src.west());
+            return new MovementHorizontal(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementHorizontal.cost(context, node.asBlockPos(), node.asBlockPos().west());
+            BlockPos pos = node.asBlockPos();
+            return MovementHorizontal.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
-    /*UP_NORTH(0, +1, -1) {
+    UP_NORTH(0, +1, -1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementAscending(context, src, src.up().north());
+            return new MovementAscend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementAscending.cost(context, node.asBlockPos(), node.asBlockPos().up().north());
+            BlockPos pos = node.asBlockPos();
+            return MovementAscend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     UP_SOUTH(0, +1, +1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementAscending(context, src, src.up().south());
+            return new MovementAscend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementAscending.cost(context, node.asBlockPos(), node.asBlockPos().up().south());
+            BlockPos pos = node.asBlockPos();
+            return MovementAscend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     UP_EAST(+1, +1, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementAscending(context, src, src.up().east());
+            return new MovementAscend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementAscending.cost(context, node.asBlockPos(), node.asBlockPos().up().east());
+            BlockPos pos = node.asBlockPos();
+            return MovementAscend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     UP_WEST(-1, +1, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementAscending(context, src, src.up().west());
+            return new MovementAscend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementAscending.cost(context, node.asBlockPos(), node.asBlockPos().up().west());
+            BlockPos pos = node.asBlockPos();
+            return MovementAscend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     DOWN_NORTH(0, -1, -1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementDescending(context, src, src.down().north());
+            return new MovementDescend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementDescending.cost(context, node.asBlockPos(), node.asBlockPos().down().north());
+            BlockPos pos = node.asBlockPos();
+            return MovementDescend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     DOWN_SOUTH(0, -1, +1) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementDescending(context, src, src.down().south());
+            return new MovementDescend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementDescending.cost(context, node.asBlockPos(), node.asBlockPos().down().south());
+            BlockPos pos = node.asBlockPos();
+            return MovementDescend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     DOWN_EAST(+1, -1, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementDescending(context, src, src.down().east());
+            return new MovementDescend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementDescending.cost(context, node.asBlockPos(), node.asBlockPos().down().east());
+            BlockPos pos = node.asBlockPos();
+            return MovementDescend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
     },
 
     DOWN_WEST(-1, -1, 0) {
         @Override
         public Movement apply(PathContext context, BlockPos src) {
-            return new MovementDescending(context, src, src.down().west());
+            return new MovementDescend(context, src, src.add(xOffset, yOffset, zOffset));
         }
 
         @Override
         public double cost(PathContext context, PathNode node) {
-            return MovementDescending.cost(context, node.asBlockPos(), node.asBlockPos().down().west());
+            BlockPos pos = node.asBlockPos();
+            return MovementDescend.cost(context, pos, pos.add(xOffset, yOffset, zOffset));
         }
-    },*/
+    },
     ;
 
     public final int xOffset;

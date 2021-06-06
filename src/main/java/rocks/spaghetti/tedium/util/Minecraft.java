@@ -1,7 +1,9 @@
 package rocks.spaghetti.tedium.util;
 
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
+import net.minecraft.client.input.Input;
 import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.GameOptions;
@@ -14,6 +16,7 @@ import static net.minecraft.util.Util.NIL_UUID;
 public class Minecraft {
     private Minecraft() { throw new IllegalStateException("Utility Class"); }
 
+
     private static GenericContainer openContainer = null;
     public static void setOpenContainer(GenericContainer container) {
         openContainer = container;
@@ -22,27 +25,37 @@ public class Minecraft {
         return openContainer;
     }
 
+
     private static boolean inputDisabled = false;
+    private static Input originalInput = null;
+
     public static void setInputDisabled(boolean state) {
         inputDisabled = state;
         if (state) {
+            originalInput = player().input;
             player().input = new KeyboardInputBlocker();
             mouse().unlockCursor();
         } else {
-            player().input = new KeyboardInput(Minecraft.options());
+            if (originalInput == null) return;
+            player().input = originalInput;
+            originalInput = null;
         }
     }
+
     public static boolean isInputDisabled() {
         return inputDisabled;
     }
+
 
     public static Mouse mouse() {
         return MinecraftClient.getInstance().mouse;
     }
 
+
     public static GameOptions options() {
         return MinecraftClient.getInstance().options;
     }
+
 
     public static void sendMessage(MutableText message) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -65,6 +78,17 @@ public class Minecraft {
         if (player == null) throw new IllegalStateException("Player is Null");
         return player;
     }
+
+
+    private static TriState forcedSprint = TriState.DEFAULT;
+    public static void setForcedSprint(TriState state) {
+        forcedSprint = state;
+    }
+
+    public static TriState getForcedSprint() {
+        return inputDisabled ? forcedSprint : TriState.DEFAULT;
+    }
+
 
     private static class KeyboardInputBlocker extends KeyboardInput {
         public KeyboardInputBlocker() {

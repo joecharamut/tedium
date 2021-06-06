@@ -1,8 +1,11 @@
 package rocks.spaghetti.tedium.ai.player;
 
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import rocks.spaghetti.tedium.util.Minecraft;
+
+import java.util.Optional;
 
 public class PlayerControls {
     private final ClientPlayerEntity player;
@@ -41,6 +44,7 @@ public class PlayerControls {
 
     public void sprinting(boolean state) {
         assertEnabled();
+        Minecraft.setForcedSprint(TriState.of(state));
         player.setSprinting(state);
     }
 

@@ -63,7 +63,7 @@ public abstract class Movement {
         context.controls().movement(moveX, moveZ);
 
         context.controls().jumping(currentState.getInput(Input.JUMP));
-        context.controls().sprinting(currentState.getInput(Input.SPRINT));
+//        context.controls().sprinting(currentState.getInput(Input.SPRINT)); // TODO: sprinting is broken
         context.controls().sneaking(currentState.getInput(Input.SNEAK));
 
         currentState.clearInputs();

@@ -1,15 +1,19 @@
-package rocks.spaghetti.tedium.ai.movement;
+package rocks.spaghetti.tedium.ai.movement.moves;
 
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import rocks.spaghetti.tedium.ai.movement.MovementState;
 import rocks.spaghetti.tedium.ai.path.PathContext;
+import rocks.spaghetti.tedium.ai.player.PlayerContext;
+import rocks.spaghetti.tedium.util.RotationUtil;
 
 import static rocks.spaghetti.tedium.ai.movement.ActionCosts.*;
 
-public class MovementDescending extends Movement {
+public class MovementDescend extends MovementHorizontal {
 
-    public MovementDescending(PathContext context, BlockPos src, BlockPos dest) {
-        super(src, dest);
+    public MovementDescend(PathContext context, BlockPos src, BlockPos dest) {
+        super(context, src, dest);
     }
 
     public static double cost(PathContext context, BlockPos src, BlockPos dest) {

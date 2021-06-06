@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.options.KeyBinding;
@@ -108,6 +109,8 @@ public class ClientEntrypoint implements ClientModInitializer {
                 ModData.saveWorld();
             }
         });
+
+        PlayerSprintCallback.EVENT.register(Minecraft::getForcedSprint);
     }
 
     private void test() {
@@ -129,10 +132,13 @@ public class ClientEntrypoint implements ClientModInitializer {
                 Path path = result.get();
                 Renderable pathLine = new PathLine(path.getPath(), 0xff00ff);
                 RenderHelper.addListener(() -> RenderHelper.queue(pathLine));
-                executor = new PathExecutor(path).onFinish(() -> {
-                    Minecraft.sendMessage("Finished executing path, seeya");
+                executor = new PathExecutor(path).onStop(() -> {
                     Minecraft.setInputDisabled(false);
                     executor = null;
+                }).onSuccess(() -> {
+                    Minecraft.sendMessage("Finished executing path");
+                }).onError(() -> {
+                    Minecraft.sendMessage("Error executing path");
                 });
             }
         }).start();
