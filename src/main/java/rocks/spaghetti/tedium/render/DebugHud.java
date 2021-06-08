@@ -2,12 +2,11 @@ package rocks.spaghetti.tedium.render;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 import rocks.spaghetti.tedium.util.Rotation;
-import rocks.spaghetti.tedium.mixin.MinecraftClientAccessor;
 import rocks.spaghetti.tedium.render.hud.HudComponent;
 import rocks.spaghetti.tedium.render.hud.TextGridComponent;
 import rocks.spaghetti.tedium.util.Minecraft;
@@ -18,7 +17,7 @@ public class DebugHud {
     private static final ArrayList<HudComponent> components = new ArrayList<>();
     private static boolean enabled = false;
     private static final MinecraftClient client = MinecraftClient.getInstance();
-    private static final GameOptions options = ((MinecraftClientAccessor) MinecraftClient.getInstance()).getGameOptions();
+    private static final GameOptions options = MinecraftClient.getInstance().options;
 
     private DebugHud() {
 
@@ -62,7 +61,7 @@ public class DebugHud {
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             Vec3d playerPos = player.getPos();
             textGrid.upperLeft(String.format("Position: %.2f %.2f %.2f", playerPos.x, playerPos.y, playerPos.z));
-            textGrid.upperLeft(new Rotation(player.pitch, player.yaw).normalizeAndClamp().toString());
+            textGrid.upperLeft(new Rotation(player.getPitch(), player.getYaw()).normalizeAndClamp().toString());
         }
 
         components.add(textGrid);

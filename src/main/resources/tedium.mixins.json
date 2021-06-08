@@ -2,19 +2,20 @@
   "required": true,
   "package": "rocks.spaghetti.tedium.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [ ],
+  "mixins": [
+    "ClientConnectionMixin"
+  ],
   "client": [
-    "MinecraftClientAccessor",
-    "MouseMixin",
-    "MinecraftClientMixin",
-    "KeyBindingMixin",
+    "ClientPlayerEntityMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "ContainerMixin",
     "GameMenuScreenMixin",
     "IngredientAccessor",
     "IngredientTagEntryAccessor",
-    "ContainerMixin",
-    "ClientPlayNetworkHandlerMixin",
-    "RecipeManagerMixin",
-    "ClientPlayerEntityMixin"
+    "KeyBindingMixin",
+    "MinecraftClientMixin",
+    "MouseMixin",
+    "RecipeManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

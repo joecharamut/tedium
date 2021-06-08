@@ -40,6 +40,6 @@ public class PlayerContext {
     }
 
     public Rotation playerRotation() {
-        return new Rotation(player.pitch, player.yaw);
+        return new Rotation(player.getPitch(), player.getYaw());
     }
 }

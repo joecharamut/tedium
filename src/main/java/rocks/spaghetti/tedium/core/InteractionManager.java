@@ -52,11 +52,11 @@ public class InteractionManager {
 
         public InventoryPickEvent(int slot) {
             PlayerEntity player = MinecraftClient.getInstance().player;
-            if (player == null || player.inventory.selectedSlot == slot) {
+            if (player == null || player.getInventory().selectedSlot == slot) {
                 thePacket = null;
             } else {
                 if (slot < 9) {
-                    player.inventory.selectedSlot = slot;
+                    player.getInventory().selectedSlot = slot;
                     thePacket = new UpdateSelectedSlotC2SPacket(slot);
                 } else {
                     thePacket = new PickFromInventoryC2SPacket(slot);

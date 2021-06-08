@@ -3,6 +3,7 @@ package rocks.spaghetti.tedium.render.gui;
 import io.github.cottonmc.cotton.gui.client.ScreenDrawing;
 import io.github.cottonmc.cotton.gui.widget.WButton;
 import io.github.cottonmc.cotton.gui.widget.data.HorizontalAlignment;
+import io.github.cottonmc.cotton.gui.widget.data.InputResult;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.util.math.MatrixStack;
@@ -24,13 +25,15 @@ public class ToggleButton extends WButton {
     }
 
     @Override
-    public void onClick(int x, int y, int button) {
+    public InputResult onClick(int x, int y, int button) {
         if (button == 0 && isEnabled() && isWithinBounds(x, y)) {
             toggled = !toggled;
             MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
             if (getOnClick() != null) getOnClick().run();
+            return InputResult.PROCESSED;
         }
+        return InputResult.IGNORED;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class ToggleButton extends WButton {
         int halfWidth = getWidth() / 2;
         if (halfWidth > 198) halfWidth = 198;
 
-        ScreenDrawing.texturedRect(
+        ScreenDrawing.texturedRect(matrices,
                 x, y,
                 getWidth() / 2, 20,
                 buttonImage,
@@ -63,7 +66,7 @@ public class ToggleButton extends WButton {
                 halfWidth * px, 20 * py,
                 0xFFFFFFFF);
 
-        ScreenDrawing.texturedRect(
+        ScreenDrawing.texturedRect(matrices,
                 x + (getWidth() / 2), y,
                 getWidth() / 2, 20,
                 buttonImage,

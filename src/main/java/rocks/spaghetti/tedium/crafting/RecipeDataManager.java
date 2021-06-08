@@ -51,7 +51,7 @@ public class RecipeDataManager {
             Map<String, Integer> ingredientMap = new HashMap<>();
             boolean ingredientsOk = true;
 
-            for (Ingredient ingredient : recipe.getPreviewInputs()) {
+            for (Ingredient ingredient : recipe.getIngredients()) {
                 Ingredient.Entry[] entries = getEntriesFor(ingredient);
                 if (entries.length == 0) continue;
 
@@ -116,7 +116,7 @@ public class RecipeDataManager {
     }
 
     private static Identifier getTagFor(Tag<Item> tag) {
-        return ServerTagManagerHolder.getTagManager().getItems().getTagId(tag);
+        return ServerTagManagerHolder.getTagManager().getTagId(Registry.ITEM_KEY, tag, IllegalArgumentException::new);
     }
 
     private static Ingredient.Entry[] getEntriesFor(Ingredient ingredient) {

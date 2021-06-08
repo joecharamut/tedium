@@ -5,10 +5,10 @@ import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.SharedConstants;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
@@ -27,7 +27,7 @@ public class Schematic {
 
     public final int version;
     public final int dataVersion;
-    public final Map<String, Tag> metadata;
+    public final Map<String, NbtElement> metadata;
     public final short width;
     public final short length;
     public final short height;
@@ -38,7 +38,7 @@ public class Schematic {
 //    public final Map<Vec3i, BlockEntity> blockEntities;
 //    public final Map<Vec3i, Entity> entities;
 
-    private Schematic(CompoundTag schematic) throws SchematicException {
+    private Schematic(NbtCompound schematic) throws SchematicException {
         version = schematic.getInt("Version");
         if (version != 2) {
             throw new SchematicException(String.format("Unknown Schematic Version (Expected 2, Got: %s)", version));
@@ -53,9 +53,9 @@ public class Schematic {
             Log.warn("dataVersion > minecraftVersion, Stuff might be broken!");
         }
 
-        HashMap<String, Tag> tempMetadata = new HashMap<>();
+        HashMap<String, NbtElement> tempMetadata = new HashMap<>();
         if (schematic.contains("Metadata", NbtType.COMPOUND)) {
-            CompoundTag meta = schematic.getCompound("Metadata");
+            NbtCompound meta = schematic.getCompound("Metadata");
 
             for (String key : meta.getKeys()) {
                 tempMetadata.put(key, meta.get(key));
@@ -76,7 +76,7 @@ public class Schematic {
         paletteMax = schematic.getInt("PaletteMax");
 
         HashMap<Integer, BlockState> tempPalette = new HashMap<>();
-        CompoundTag paletteTag = schematic.getCompound("Palette");
+        NbtCompound paletteTag = schematic.getCompound("Palette");
         for (String key : paletteTag.getKeys()) {
             int index = paletteTag.getInt(key);
             Matcher blockMatch = BLOCKSTATE_REGEX.matcher(key);
@@ -86,11 +86,11 @@ public class Schematic {
             Registry.BLOCK
                     .getOrEmpty(new Identifier(blockId))
                     .orElseThrow(() -> new SchematicException(String.format("Invalid Block ID while parsing Palette: %s", blockId)));
-            CompoundTag blockTag = new CompoundTag();
+            NbtCompound blockTag = new NbtCompound();
             blockTag.putString("Name", blockId);
 
             String propList = blockMatch.group(2);
-            CompoundTag propTag = new CompoundTag();
+            NbtCompound propTag = new NbtCompound();
             if (propList != null) {
                 Matcher propMatch = PROPERTIES_REGEX.matcher(propList);
                 while (propMatch.find()) {
@@ -122,7 +122,7 @@ public class Schematic {
             throw new SchematicException("Invalid Schematic File");
         }
 
-        CompoundTag schematic;
+        NbtCompound schematic;
         try {
             schematic = NbtIo.readCompressed(schematicFile);
         } catch (IOException e) {

@@ -56,7 +56,7 @@ public class PlayerControls {
 
     public void look(float pitch, float yaw) {
         assertEnabled();
-        player.pitch = pitch;
-        player.yaw = yaw;
+        player.setPitch(pitch);
+        player.setYaw(yaw);
     }
 }

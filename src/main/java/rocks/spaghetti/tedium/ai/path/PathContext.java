@@ -44,7 +44,7 @@ public class PathContext {
         if (block == Blocks.MAGMA_BLOCK) return false;
         if (state.isFullCube(world, pos)) return true;
 
-        if (block == Blocks.FARMLAND || block == Blocks.GRASS_PATH) return true;
+        if (block == Blocks.FARMLAND || block == Blocks.DIRT_PATH) return true;
         if (block == Blocks.CHEST || block == Blocks.ENDER_CHEST || block == Blocks.TRAPPED_CHEST) return true;
         if (block == Blocks.GLASS || block instanceof StainedGlassBlock) return true;
         if (block instanceof SlabBlock) {

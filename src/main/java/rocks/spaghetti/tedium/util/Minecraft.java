@@ -6,7 +6,7 @@ import net.minecraft.client.Mouse;
 import net.minecraft.client.input.Input;
 import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;

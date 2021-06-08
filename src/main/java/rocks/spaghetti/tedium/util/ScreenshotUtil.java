@@ -3,7 +3,7 @@ package rocks.spaghetti.tedium.util;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.ScreenshotUtils;
+import net.minecraft.client.util.ScreenshotRecorder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -20,7 +20,7 @@ public class ScreenshotUtil {
     public static void takeScreenshot(Consumer<NativeImage> callback) {
         runInClientThread.execute(() -> {
             Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
-            callback.accept(ScreenshotUtils.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer));
+            callback.accept(ScreenshotRecorder.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer));
         });
     }
 

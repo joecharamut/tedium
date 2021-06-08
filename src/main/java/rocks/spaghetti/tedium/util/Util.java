@@ -3,7 +3,6 @@ package rocks.spaghetti.tedium.util;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -181,20 +180,20 @@ public class Util {
         return readInputStreamToString(is);
     }
 
-    @SuppressWarnings("java:S100")
-    public static Vec3d Vec3fToVec3d(Vector3f input) {
-        return new Vec3d(input.getX(), input.getY(), input.getZ());
-    }
+//    @SuppressWarnings("java:S100")
+//    public static Vec3d Vec3fToVec3d(Vector3f input) {
+//        return new Vec3d(input.getX(), input.getY(), input.getZ());
+//    }
 
     @SuppressWarnings("java:S100")
     public static Vec3i Vec3dToVec3i(Vec3d input) {
         return new Vec3i(input.x, input.y, input.z);
     }
 
-    @SuppressWarnings("java:S100")
-    public static Vector3f Vec3dToVec3f(Vec3d input) {
-        return new Vector3f((float) input.x, (float) input.y, (float) input.z);
-    }
+//    @SuppressWarnings("java:S100")
+//    public static Vector3f Vec3dToVec3f(Vec3d input) {
+//        return new Vector3f((float) input.x, (float) input.y, (float) input.z);
+//    }
 
     @SuppressWarnings("java:S100")
     public static Vec3d Vec3iToVec3d(Vec3i input) {

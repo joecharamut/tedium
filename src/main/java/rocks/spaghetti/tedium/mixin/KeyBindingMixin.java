@@ -1,6 +1,6 @@
 package rocks.spaghetti.tedium.mixin;
 
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.ActionResult;
 import org.spongepowered.asm.mixin.Mixin;
