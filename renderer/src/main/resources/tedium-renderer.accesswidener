@@ -1,0 +1,4 @@
+accessWidener v1 named
+
+extendable class net/minecraft/client/util/WindowProvider
+extendable class net/minecraft/client/util/Window

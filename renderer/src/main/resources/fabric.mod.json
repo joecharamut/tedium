@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "tedium-renderer",
+  "version": "${version}",
+  "name": "Tedium Renderer",
+  "description": "",
+  "authors": [
+    "Joe"
+  ],
+  "contact": {
+    "homepage": "https://github.com/joecharamut/tedium/wiki",
+    "sources": "https://github.com/joecharamut/tedium"
+  },
+  "license": "GPL-3.0-only",
+  "icon": "assets/tedium/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "rocks.spaghetti.tedium.renderer.TediumRendererEntrypoint"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "tedium-renderer.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.17.x"
+  },
+  "custom": {
+    "fabric-renderer-api-v1:contains_renderer": true
+  },
+  "accessWidener": "tedium-renderer.accesswidener"
+}
