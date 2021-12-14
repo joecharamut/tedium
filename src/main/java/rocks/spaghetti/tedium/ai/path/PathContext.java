@@ -12,8 +12,8 @@ public class PathContext {
 
     public PathContext(ClientWorld world) {
         this.world = world;
-        this.maxY = 256;
-        this.minY = 0;
+        this.maxY = world.getTopY();
+        this.minY = world.getBottomY();
     }
 
     public BlockState get(int x, int y, int z) {

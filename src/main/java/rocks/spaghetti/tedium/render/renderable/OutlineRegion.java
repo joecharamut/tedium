@@ -3,12 +3,12 @@ package rocks.spaghetti.tedium.render.renderable;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import rocks.spaghetti.tedium.render.RenderHelper;
 
-import static rocks.spaghetti.tedium.render.RenderHelper.glRenderLines;
-import static rocks.spaghetti.tedium.render.RenderHelper.glRenderPolygon;
+import static rocks.spaghetti.tedium.render.RenderHelper.*;
 
 public class OutlineRegion implements Renderable {
     private static final Vec3d UNIT_VECTOR = new Vec3d(1, 1, 1);
@@ -61,11 +61,15 @@ public class OutlineRegion implements Renderable {
         double adjY = origin.getY() - camera.getPos().getY();
         double adjZ = origin.getZ() - camera.getPos().getZ();
 
-        RenderSystem.lineWidth(1.5f);
+        RenderSystem.lineWidth(2.0f);
+
+        Tessellator tess = Tessellator.getInstance();
+        BufferBuilder buffer = tess.getBuffer();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         if (lines) {
             // bottom face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX, adjY, adjZ}, {adjX + l, adjY, adjZ},
                     {adjX, adjY, adjZ}, {adjX, adjY, adjZ + w},
                     {adjX + l, adjY, adjZ}, {adjX + l, adjY, adjZ + w},
@@ -73,7 +77,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 1.0f);
 
             // top face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX, adjY + h, adjZ}, {adjX + l, adjY + h, adjZ},
                     {adjX, adjY + h, adjZ}, {adjX, adjY + h, adjZ + w},
                     {adjX + l, adjY + h, adjZ}, {adjX + l, adjY + h, adjZ + w},
@@ -81,7 +85,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 1.0f);
 
             // north face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX, adjY, adjZ}, {adjX + l, adjY, adjZ},
                     {adjX, adjY, adjZ}, {adjX, adjY + h, adjZ},
                     {adjX + l, adjY, adjZ}, {adjX + l, adjY + h, adjZ},
@@ -89,7 +93,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 1.0f);
 
             // east face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX + l, adjY, adjZ}, {adjX + l, adjY, adjZ + w},
                     {adjX + l, adjY, adjZ}, {adjX + l, adjY + h, adjZ},
                     {adjX + l, adjY, adjZ + w}, {adjX + l, adjY + h, adjZ + w},
@@ -97,7 +101,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 1.0f);
 
             // south face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX, adjY, adjZ + w}, {adjX + l, adjY, adjZ + w},
                     {adjX, adjY, adjZ + w}, {adjX, adjY + h, adjZ + w},
                     {adjX + l, adjY, adjZ + w}, {adjX + l, adjY + h, adjZ + w},
@@ -105,7 +109,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 1.0f);
 
             // west face
-            glRenderLines(new double[][]{
+            drawLines(tess, buffer, new double[][]{
                     {adjX, adjY, adjZ}, {adjX, adjY, adjZ + w},
                     {adjX, adjY, adjZ}, {adjX, adjY + h, adjZ},
                     {adjX, adjY, adjZ + w}, {adjX, adjY + h, adjZ + w},
@@ -115,7 +119,7 @@ public class OutlineRegion implements Renderable {
 
         if (fill) {
             // bottom face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX + l, adjY, adjZ + w},
                     {adjX + l, adjY, adjZ},
                     {adjX, adjY, adjZ},
@@ -123,7 +127,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 0.25f);
 
             // top face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX + l, adjY + h, adjZ + w},
                     {adjX + l, adjY + h, adjZ},
                     {adjX, adjY + h, adjZ},
@@ -131,7 +135,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 0.25f);
 
             // north face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX + l, adjY + h, adjZ},
                     {adjX + l, adjY, adjZ},
                     {adjX, adjY, adjZ},
@@ -139,7 +143,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 0.25f);
 
             // east face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX + l, adjY + h, adjZ + w},
                     {adjX + l, adjY, adjZ + w},
                     {adjX + l, adjY, adjZ},
@@ -147,7 +151,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 0.25f);
 
             // south face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX + l, adjY + h, adjZ + w},
                     {adjX + l, adjY, adjZ + w},
                     {adjX, adjY, adjZ + w},
@@ -155,7 +159,7 @@ public class OutlineRegion implements Renderable {
             }, r, g, b, 0.25f);
 
             // west face
-            glRenderPolygon(new double[][]{
+            drawQuads(tess, buffer, new double[][]{
                     {adjX, adjY + h, adjZ + w},
                     {adjX, adjY, adjZ + w},
                     {adjX, adjY, adjZ},

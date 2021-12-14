@@ -12,6 +12,8 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.Option;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL32;
 import rocks.spaghetti.tedium.ai.goals.GoalBlock;
 import rocks.spaghetti.tedium.ai.path.AStarPathFinder;
 import rocks.spaghetti.tedium.ai.path.Path;
@@ -27,6 +29,7 @@ import rocks.spaghetti.tedium.render.renderable.PathLine;
 import rocks.spaghetti.tedium.render.renderable.Renderable;
 import rocks.spaghetti.tedium.util.*;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 
@@ -116,7 +119,7 @@ public class ClientEntrypoint implements ClientModInitializer {
     private void test() {
 //        BlockPos start = new BlockPos(184, 64, -110);
         BlockPos start = Minecraft.player().getBlockPos();
-        BlockPos goal = new BlockPos(191, 64, -105);
+        BlockPos goal = new BlockPos(-7, -60, -7);
 
         RenderHelper.clearListeners();
         Renderable startOutline = new OutlineRegion(start, 0xff0000, true);
