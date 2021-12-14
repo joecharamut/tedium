@@ -19,7 +19,7 @@ public abstract class ContainerMixin {
     private Class<?> current;
 
     @Inject(method = "updateSlotStacks", at = @At("HEAD"))
-    public void onUpdateSlotStacks(List<ItemStack> stacks, CallbackInfo info) {
+    public void onUpdateSlotStacks(int revision, List<ItemStack> stacks, ItemStack cursorStack, CallbackInfo ci) {
         if (this.getClass().equals(PlayerScreenHandler.class)) return;
 
         current = this.getClass();

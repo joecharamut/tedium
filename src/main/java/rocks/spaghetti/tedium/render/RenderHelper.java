@@ -28,7 +28,7 @@ public class RenderHelper {
     }
 
     public static void queue(Renderable... objs) {
-        RenderSystem.assertThread(RenderSystem::isOnRenderThread);
+        RenderSystem.assertOnRenderThread();
 
         for (Renderable obj : objs) {
             if (obj instanceof FloatingText || obj instanceof SchematicRenderer) {
@@ -76,7 +76,7 @@ public class RenderHelper {
     }
 
     public static void glRenderLines(double[][] vertexes, float r, float g, float b, float a) {
-        RenderSystem.assertThread(RenderSystem::isOnGameThread);
+        RenderSystem.assertOnGameThread();
         GL11.glBegin(GL11.GL_LINES);
 
         GL11.glColor4f(r, g, b, a);
@@ -88,7 +88,7 @@ public class RenderHelper {
     }
 
     public static void glRenderPolygon(double[][] vertexes, float r, float g, float b, float a) {
-        RenderSystem.assertThread(RenderSystem::isOnGameThread);
+        RenderSystem.assertOnGameThread();
         GL11.glBegin(GL11.GL_POLYGON);
 
         GL11.glColor4f(r, g, b, a);

@@ -40,7 +40,7 @@ public class FloatingText implements Renderable {
         matrices.multiply(camera.getRotation());
         matrices.scale(-0.025F, -0.025F, 0.025F);
         float halfWidth = -textRenderer.getWidth(text) / 2.0F;
-        textRenderer.draw(text, halfWidth, 0, 0xffffffff, false, matrices.peek().getModel(), context.consumers(), false, 0x3f000000, 0xf00010);
+        textRenderer.draw(text, halfWidth, 0, 0xffffffff, false, matrices.peek().getPositionMatrix(), context.consumers(), false, 0x3f000000, 0xf00010);
         matrices.pop();
     }
 }

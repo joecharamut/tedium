@@ -20,7 +20,7 @@ public class PathLine implements Renderable {
 
     @Override
     public void render(WorldRenderContext context) {
-        RenderSystem.assertThread(RenderSystem::isOnGameThread);
+        RenderSystem.assertOnGameThread();
 
         float r = ((color >> 16) & 255) / 255.0f;
         float g = ((color >>  8) & 255) / 255.0f;

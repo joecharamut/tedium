@@ -38,7 +38,7 @@ public class KeyBindings {
 
     public static void tick(MinecraftClient client) {
         while (openMenuKey.wasPressed()) {
-            client.openScreen(ControlGui.createScreen());
+            client.setScreen(ControlGui.createScreen());
         }
 
         while (toggleDebugKey.wasPressed()) {

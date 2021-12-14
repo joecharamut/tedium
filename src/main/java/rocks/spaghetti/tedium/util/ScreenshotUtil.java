@@ -20,7 +20,7 @@ public class ScreenshotUtil {
     public static void takeScreenshot(Consumer<NativeImage> callback) {
         runInClientThread.execute(() -> {
             Framebuffer framebuffer = MinecraftClient.getInstance().getFramebuffer();
-            callback.accept(ScreenshotRecorder.takeScreenshot(framebuffer.textureWidth, framebuffer.textureHeight, framebuffer));
+            callback.accept(ScreenshotRecorder.takeScreenshot(framebuffer));
         });
     }
 

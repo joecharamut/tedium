@@ -37,7 +37,7 @@ public class OutlineRegion implements Renderable {
 
     @Override
     public void render(WorldRenderContext context) {
-        RenderSystem.assertThread(RenderSystem::isOnGameThread);
+        RenderSystem.assertOnGameThread();
 
         if (MinecraftClient.getInstance().player == null) return;
         if (MinecraftClient.getInstance().player.squaredDistanceTo(origin.getX(), origin.getY(), origin.getZ())

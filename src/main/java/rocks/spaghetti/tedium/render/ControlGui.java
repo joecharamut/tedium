@@ -50,9 +50,7 @@ public class ControlGui extends LightweightGuiDescription {
             tabHeightField.setAccessible(true);
             int tabHeight = tabHeightField.getInt(null);
 
-            Field panelPaddingField = WTabPanel.class.getDeclaredField("PANEL_PADDING");
-            panelPaddingField.setAccessible(true);
-            int panelPadding = panelPaddingField.getInt(null);
+            int panelPadding = 8;
 
             Method addWidget = WTabPanel.class.getDeclaredMethod("add", WWidget.class, int.class, int.class);
             addWidget.setAccessible(true);
