@@ -39,8 +39,6 @@ dependencies {
 	// Fabric API
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricApi_version}"
 
-//	implementation project(":renderer")
-
 	// https://github.com/CottonMC/LibGui
 	modImplementation("io.github.cottonmc:LibGui:${project.libGui_version}") {
 		exclude(group: "net.fabricmc.fabric-api")
