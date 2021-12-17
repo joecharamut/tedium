@@ -45,7 +45,7 @@ public class Schematic {
         }
 
         dataVersion = schematic.getInt("DataVersion");
-        int minecraftVersion = SharedConstants.getGameVersion().getWorldVersion();
+        int minecraftVersion = SharedConstants.getGameVersion().getSaveVersion().getId();
 
         if (dataVersion < minecraftVersion) {
             Log.warn("dataVersion < minecraftVersion, Stuff might be broken!");

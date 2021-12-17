@@ -18,8 +18,7 @@ public class Util {
     private Util() { throw new IllegalStateException("Utility class"); }
 
     public static String prettyPrintJson(String jsonString) {
-        JsonParser parser = new JsonParser();
-        JsonObject object = parser.parse(jsonString).getAsJsonObject();
+        JsonObject object = JsonParser.parseString(jsonString).getAsJsonObject();
         return new GsonBuilder().setPrettyPrinting().create().toJson(object);
     }
 
