@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.render.gui;
+package rocks.spaghetti.tedium.gui.component;
 
 import io.github.cottonmc.cotton.gui.client.ScreenDrawing;
 import io.github.cottonmc.cotton.gui.widget.WButton;

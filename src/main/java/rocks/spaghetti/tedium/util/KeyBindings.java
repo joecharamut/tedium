@@ -5,7 +5,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
-import rocks.spaghetti.tedium.render.ControlGui;
+import rocks.spaghetti.tedium.gui.ControlGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 
 public class KeyBindings {

@@ -1,4 +1,4 @@
-package rocks.spaghetti.tedium.render;
+package rocks.spaghetti.tedium.gui;
 
 import io.github.cottonmc.cotton.gui.client.BackgroundPainter;
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
@@ -17,8 +17,8 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import org.lwjgl.glfw.GLFW;
-import rocks.spaghetti.tedium.render.gui.ToggleButton;
-import rocks.spaghetti.tedium.render.gui.TooltipButton;
+import rocks.spaghetti.tedium.gui.component.ToggleButton;
+import rocks.spaghetti.tedium.gui.component.TooltipButton;
 import rocks.spaghetti.tedium.util.Constants;
 import rocks.spaghetti.tedium.util.Log;
 import rocks.spaghetti.tedium.util.ModData;
