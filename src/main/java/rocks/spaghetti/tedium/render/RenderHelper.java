@@ -10,14 +10,17 @@ import rocks.spaghetti.tedium.render.renderable.Renderable;
 import rocks.spaghetti.tedium.render.renderable.SchematicRenderer;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class RenderHelper {
     private RenderHelper() { throw new IllegalStateException("Utility Class"); }
 
 
-    private static final Queue<RenderListener> listeners = new ConcurrentLinkedQueue<>();
+    private static final Map<String, RenderListener> listeners = new ConcurrentHashMap<>();
     private static final Queue<Renderable> beforeDebugQueue = new ArrayDeque<>();
     private static final Queue<Renderable> afterEntitiesQueue = new ArrayDeque<>();
 
@@ -25,8 +28,12 @@ public class RenderHelper {
         listeners.clear();
     }
 
-    public static void addListener(RenderListener listener) {
-        listeners.add(listener);
+    public static void removeListener(String id) {
+        listeners.remove(id);
+    }
+
+    public static void addListener(String id, RenderListener listener) {
+        listeners.put(id, listener);
     }
 
     public static void queue(Renderable... objs) {
@@ -42,7 +49,7 @@ public class RenderHelper {
     }
 
     public static void start(WorldRenderContext context) {
-        for (RenderListener listener : listeners) {
+        for (RenderListener listener : listeners.values()) {
             listener.onRenderStart();
         }
     }

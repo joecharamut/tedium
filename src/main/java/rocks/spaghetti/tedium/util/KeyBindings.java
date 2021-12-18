@@ -6,6 +6,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 import rocks.spaghetti.tedium.gui.ControlGui;
+import rocks.spaghetti.tedium.gui.DesignerGui;
 import rocks.spaghetti.tedium.render.DebugHud;
 
 public class KeyBindings {
@@ -25,6 +26,13 @@ public class KeyBindings {
             Constants.CATEGORY_KEYS
     ));
 
+    public static final KeyBinding openDesignerKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.tedium.openDesigner",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_F8,
+            Constants.CATEGORY_KEYS
+    ));
+
     public static final KeyBinding testKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.tedium.test",
             InputUtil.Type.KEYSYM,
@@ -33,12 +41,16 @@ public class KeyBindings {
     ));
 
     public static final KeyBinding[] modKeybindings = {
-            openMenuKey, toggleDebugKey, testKey
+            openMenuKey, toggleDebugKey, openDesignerKey, testKey
     };
 
     public static void tick(MinecraftClient client) {
         while (openMenuKey.wasPressed()) {
             client.setScreen(ControlGui.createScreen());
+        }
+
+        while (openDesignerKey.wasPressed()) {
+            client.setScreen(DesignerGui.createScreen());
         }
 
         while (toggleDebugKey.wasPressed()) {

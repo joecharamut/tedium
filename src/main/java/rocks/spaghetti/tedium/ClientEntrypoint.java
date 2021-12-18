@@ -121,10 +121,11 @@ public class ClientEntrypoint implements ClientModInitializer {
         BlockPos start = Minecraft.player().getBlockPos();
         BlockPos goal = new BlockPos(-7, -60, -7);
 
-        RenderHelper.clearListeners();
+        RenderHelper.removeListener("test_outline");
+        RenderHelper.removeListener("test_path");
         Renderable startOutline = new OutlineRegion(start, 0xff0000, true);
         Renderable goalOutline = new OutlineRegion(goal, 0x00ff00, true);
-        RenderHelper.addListener(() -> RenderHelper.queue(startOutline, goalOutline));
+        RenderHelper.addListener("test_outline", () -> RenderHelper.queue(startOutline, goalOutline));
 
         AStarPathFinder pathFinder = new AStarPathFinder(start, new GoalBlock(goal), new PathContext(MinecraftClient.getInstance().world));
 
@@ -134,15 +135,16 @@ public class ClientEntrypoint implements ClientModInitializer {
             if (result.isPresent()) {
                 Path path = result.get();
                 Renderable pathLine = new PathLine(path.getPath(), 0xff00ff);
-                RenderHelper.addListener(() -> RenderHelper.queue(pathLine));
-                executor = new PathExecutor(path).onStop(() -> {
-                    Minecraft.setInputDisabled(false);
-                    executor = null;
-                }).onSuccess(() -> {
-                    Minecraft.sendMessage("Finished executing path");
-                }).onError(() -> {
-                    Minecraft.sendMessage("Error executing path");
-                });
+                RenderHelper.addListener("test_path", () -> RenderHelper.queue(pathLine));
+                executor = new PathExecutor(path)
+                        .onStop(() -> {
+                            Minecraft.setInputDisabled(false);
+                            executor = null;
+                        }).onSuccess(() -> {
+                            Minecraft.sendMessage("Finished executing path");
+                        }).onError(() -> {
+                            Minecraft.sendMessage("Error executing path");
+                        });
             }
         }).start();
     }
